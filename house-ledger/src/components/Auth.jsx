@@ -13,8 +13,10 @@ export default function Auth() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const fn = mode === "signin" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
-    const { error } = await fn({ email: email.trim(), password });
+const { error } =
+  mode === "signin"
+    ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    : await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
     if (error) setError(error.message);
     // On success, App.jsx's onAuthStateChange listener picks up the new session automatically.
