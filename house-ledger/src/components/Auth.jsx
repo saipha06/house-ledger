@@ -13,10 +13,10 @@ export default function Auth() {
     e.preventDefault();
     setError("");
     setLoading(true);
-const { error } =
-  mode === "signin"
-    ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
-    : await supabase.auth.signUp({ email: email.trim(), password });
+    const { error } =
+      mode === "signin"
+        ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        : await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
     if (error) setError(error.message);
     // On success, App.jsx's onAuthStateChange listener picks up the new session automatically.
@@ -30,6 +30,7 @@ const { error } =
 
         <div style={tabRow}>
           <button
+            className="tap-btn"
             style={{ ...tab, ...(mode === "signin" ? tabActive : {}) }}
             onClick={() => {
               setMode("signin");
@@ -40,6 +41,7 @@ const { error } =
             Sign in
           </button>
           <button
+            className="tap-btn"
             style={{ ...tab, ...(mode === "signup" ? tabActive : {}) }}
             onClick={() => {
               setMode("signup");
@@ -72,7 +74,7 @@ const { error } =
             onChange={(e) => setPassword(e.target.value)}
           />
           {error && <div style={errorText}>{error}</div>}
-          <button style={btn} disabled={loading}>
+          <button className="tap-btn" style={btn} disabled={loading}>
             {mode === "signin" ? <LogIn size={15} style={iconStyle} /> : <UserPlus size={15} style={iconStyle} />}
             {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
@@ -87,7 +89,7 @@ const { error } =
 }
 
 const wrap = {
-  minHeight: "100vh",
+  height: "100dvh",
   background: "#12201C",
   display: "flex",
   alignItems: "center",
@@ -139,7 +141,7 @@ const label = {
 const input = {
   width: "100%",
   padding: "10px 12px",
-  fontSize: 14,
+  fontSize: 16,
   fontFamily: "'Inter', sans-serif",
   border: "1px solid rgba(44,42,34,0.2)",
   borderRadius: 7,
@@ -149,7 +151,7 @@ const input = {
 const btn = {
   width: "100%",
   padding: "12px",
-  fontSize: 14,
+  fontSize: 16,
   fontWeight: 600,
   borderRadius: 8,
   border: "none",

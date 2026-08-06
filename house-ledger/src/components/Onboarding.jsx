@@ -40,7 +40,7 @@ export default function Onboarding({ session, onDone }) {
             onChange={(e) => setName(e.target.value)}
           />
           {error && <div style={errorText}>{error}</div>}
-          <button style={btn} disabled={loading}>
+          <button className="tap-btn" style={btn} disabled={loading}>
             {loading ? "Saving…" : "Join the ledger"}
           </button>
         </form>
@@ -50,7 +50,7 @@ export default function Onboarding({ session, onDone }) {
 }
 
 const wrap = {
-  minHeight: "100vh",
+  height: "100dvh",
   background: "#12201C",
   display: "flex",
   alignItems: "center",
@@ -79,7 +79,7 @@ const title = { fontFamily: "'Fraunces', serif", fontSize: 22, fontWeight: 600, 
 const input = {
   width: "100%",
   padding: "10px 12px",
-  fontSize: 14,
+  fontSize: 16,
   border: "1px solid rgba(44,42,34,0.2)",
   borderRadius: 7,
   background: "#F7F4EA",
@@ -89,7 +89,7 @@ const input = {
 const btn = {
   width: "100%",
   padding: "12px",
-  fontSize: 14,
+  fontSize: 16,
   fontWeight: 600,
   borderRadius: 8,
   border: "none",

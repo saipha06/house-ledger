@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react";
-import { Plus, Check, X, Receipt, ArrowRight, Users, LogOut } from "lucide-react";
+import { Plus, Check, X, Receipt, ArrowRight, Users, LogOut, Scale, HandCoins } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { computeBalances, simplifyDebts, fmt } from "../lib/balances";
+import Celebration from "./Celebration";
 
 export default function Ledger({ me, members, expenses, settlements, refresh }) {
   const [view, setView] = useState("balances");
   const [busy, setBusy] = useState(false);
+  const [celebration, setCelebration] = useState(null); // null | "expense" | "settle"
 
   const balances = useMemo(() => computeBalances(members, expenses, settlements), [members, expenses, settlements]);
   const simplified = useMemo(() => simplifyDebts(balances), [balances]);
@@ -24,6 +26,7 @@ export default function Ledger({ me, members, expenses, settlements, refresh }) 
       );
       await refresh();
       setView("history");
+      setCelebration("expense");
     }
     setBusy(false);
   };
@@ -40,6 +43,7 @@ export default function Ledger({ me, members, expenses, settlements, refresh }) 
     await supabase.from("settlements").insert({ from_member: from, to_member: to, amount });
     await refresh();
     setView("balances");
+    setCelebration("settle");
     setBusy(false);
   };
 
@@ -50,8 +54,17 @@ export default function Ledger({ me, members, expenses, settlements, refresh }) 
     setBusy(false);
   };
 
+  const TABS = [
+    ["balances", "Balances", Scale],
+    ["history", "History", Receipt],
+    ["add", "Add", Plus],
+    ["settle", "Settle", HandCoins],
+    ["members", "House", Users],
+  ];
+
   return (
     <div style={styles.app}>
+      <Celebration type={celebration} onDone={() => setCelebration(null)} />
       <div style={styles.cover}>
         <div style={styles.coverTop}>
           <div>
@@ -63,29 +76,11 @@ export default function Ledger({ me, members, expenses, settlements, refresh }) 
               <Receipt size={14} style={{ opacity: 0.6 }} />
               <span>{expenses.length}</span>
             </div>
-            <button style={styles.iconBtnLight} onClick={() => supabase.auth.signOut()} title="Sign out">
+            <button className="tap-btn" style={styles.iconBtnLight} onClick={() => supabase.auth.signOut()} title="Sign out">
               <LogOut size={15} />
             </button>
           </div>
         </div>
-
-        <nav style={styles.nav}>
-          {[
-            ["balances", "Balances"],
-            ["history", "History"],
-            ["add", "Add expense"],
-            ["settle", "Settle up"],
-            ["members", "Household"],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setView(key)}
-              style={{ ...styles.navBtn, ...(view === key ? styles.navBtnActive : {}) }}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
 
         <div style={styles.paperWrap}>
           <div style={styles.paper}>
@@ -102,12 +97,21 @@ export default function Ledger({ me, members, expenses, settlements, refresh }) 
             {view === "members" && <MembersView members={members} onSave={saveMembers} busy={busy} />}
           </div>
         </div>
-
-        <div style={styles.footer}>
-          <span>signed in as {me.email}</span>
-          <span style={{ opacity: 0.4 }}>shared with your household</span>
-        </div>
       </div>
+
+      <nav style={styles.tabBar}>
+        {TABS.map(([key, label, Icon]) => (
+          <button
+            key={key}
+            className="tap-btn"
+            onClick={() => setView(key)}
+            style={{ ...styles.tabBtn, ...(view === key ? styles.tabBtnActive : {}) }}
+          >
+            <Icon size={20} strokeWidth={view === key ? 2.4 : 1.8} />
+            <span style={styles.tabLabel}>{label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -177,7 +181,7 @@ function HistoryView({ expenses, memberName, onDelete, busy }) {
               </div>
             </div>
             <div style={styles.receiptAmount}>{fmt(Number(exp.amount))}</div>
-            <button style={styles.iconBtn} disabled={busy} onClick={() => onDelete(exp.id)} title="Delete entry">
+            <button className="tap-btn" style={styles.iconBtn} disabled={busy} onClick={() => onDelete(exp.id)} title="Delete entry">
               <X size={14} />
             </button>
           </div>
@@ -235,7 +239,7 @@ function AddExpenseView({ members, onAdd, busy }) {
         <label style={styles.label}>Paid by</label>
         <div style={styles.pillRow}>
           {members.map((m) => (
-            <button key={m.id} onClick={() => setPaidBy(m.id)} style={{ ...styles.pill, ...(paidBy === m.id ? styles.pillActive : {}) }}>
+            <button key={m.id} className="tap-btn" onClick={() => setPaidBy(m.id)} style={{ ...styles.pill, ...(paidBy === m.id ? styles.pillActive : {}) }}>
               {m.name}
             </button>
           ))}
@@ -245,7 +249,7 @@ function AddExpenseView({ members, onAdd, busy }) {
         <label style={styles.label}>Split between</label>
         <div style={styles.pillRow}>
           {members.map((m) => (
-            <button key={m.id} onClick={() => toggleParticipant(m.id)} style={{ ...styles.pill, ...(participantIds.includes(m.id) ? styles.pillActive : {}) }}>
+            <button key={m.id} className="tap-btn" onClick={() => toggleParticipant(m.id)} style={{ ...styles.pill, ...(participantIds.includes(m.id) ? styles.pillActive : {}) }}>
               {m.name}
             </button>
           ))}
@@ -254,10 +258,10 @@ function AddExpenseView({ members, onAdd, busy }) {
       <div style={styles.formGroup}>
         <label style={styles.label}>Split type</label>
         <div style={styles.pillRow}>
-          <button onClick={() => setSplitType("equal")} style={{ ...styles.pill, ...(splitType === "equal" ? styles.pillActive : {}) }}>
+          <button className="tap-btn" onClick={() => setSplitType("equal")} style={{ ...styles.pill, ...(splitType === "equal" ? styles.pillActive : {}) }}>
             Equal
           </button>
-          <button onClick={() => setSplitType("custom")} style={{ ...styles.pill, ...(splitType === "custom" ? styles.pillActive : {}) }}>
+          <button className="tap-btn" onClick={() => setSplitType("custom")} style={{ ...styles.pill, ...(splitType === "custom" ? styles.pillActive : {}) }}>
             Custom amounts
           </button>
         </div>
@@ -289,7 +293,7 @@ function AddExpenseView({ members, onAdd, busy }) {
         </div>
       )}
 
-      <button style={{ ...styles.primaryBtn, opacity: canSubmit ? 1 : 0.4 }} disabled={!canSubmit} onClick={submit}>
+      <button className="tap-btn" style={{ ...styles.primaryBtn, opacity: canSubmit ? 1 : 0.4 }} disabled={!canSubmit} onClick={submit}>
         <Plus size={15} style={{ marginRight: 6, verticalAlign: -3 }} />
         Add to ledger
       </button>
@@ -313,6 +317,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
           {simplified.map((t, i) => (
             <button
               key={i}
+              className="tap-btn"
               style={styles.suggestRow}
               onClick={() => {
                 setFrom(t.from);
@@ -333,7 +338,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         <label style={styles.label}>From</label>
         <div style={styles.pillRow}>
           {members.map((m) => (
-            <button key={m.id} onClick={() => setFrom(m.id)} style={{ ...styles.pill, ...(from === m.id ? styles.pillActive : {}) }}>
+            <button key={m.id} className="tap-btn" onClick={() => setFrom(m.id)} style={{ ...styles.pill, ...(from === m.id ? styles.pillActive : {}) }}>
               {m.name}
             </button>
           ))}
@@ -343,7 +348,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         <label style={styles.label}>To</label>
         <div style={styles.pillRow}>
           {members.map((m) => (
-            <button key={m.id} onClick={() => setTo(m.id)} style={{ ...styles.pill, ...(to === m.id ? styles.pillActive : {}) }}>
+            <button key={m.id} className="tap-btn" onClick={() => setTo(m.id)} style={{ ...styles.pill, ...(to === m.id ? styles.pillActive : {}) }}>
               {m.name}
             </button>
           ))}
@@ -354,7 +359,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         <input style={styles.input} placeholder="0.00" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
       </div>
 
-      <button style={{ ...styles.primaryBtn, opacity: canSubmit ? 1 : 0.4 }} disabled={!canSubmit} onClick={() => onSettle({ from, to, amount: numAmount })}>
+      <button className="tap-btn" style={{ ...styles.primaryBtn, opacity: canSubmit ? 1 : 0.4 }} disabled={!canSubmit} onClick={() => onSettle({ from, to, amount: numAmount })}>
         <Check size={15} style={{ marginRight: 6, verticalAlign: -3 }} />
         Mark as paid
       </button>
@@ -377,7 +382,7 @@ function MembersView({ members, onSave, busy }) {
           </div>
         ))}
       </div>
-      <button style={styles.primaryBtn} disabled={busy} onClick={() => onSave(local)}>
+      <button className="tap-btn" style={styles.primaryBtn} disabled={busy} onClick={() => onSave(local)}>
         <Check size={15} style={{ marginRight: 6, verticalAlign: -3 }} />
         Save names
       </button>
@@ -395,19 +400,60 @@ function SectionLabel({ n, title }) {
 }
 
 const styles = {
-  app: { minHeight: "100vh", background: "#12201C", display: "flex", fontFamily: "'Inter', system-ui, sans-serif" },
-  cover: { width: "100%", maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", minHeight: "100vh" },
-  coverTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "28px 20px 16px", color: "#E9E4D6" },
+  app: {
+    height: "100dvh",
+    background: "#12201C",
+    display: "flex",
+    flexDirection: "column",
+    fontFamily: "'Inter', system-ui, sans-serif",
+  },
+  cover: {
+    width: "100%",
+    maxWidth: 480,
+    margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
+  },
+  coverTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 14px",
+    color: "#E9E4D6",
+    flexShrink: 0,
+  },
   eyebrow: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.55, marginBottom: 4 },
-  wordmark: { fontFamily: "'Fraunces', serif", fontSize: 30, fontWeight: 600, margin: 0, letterSpacing: "-0.01em" },
+  wordmark: { fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, margin: 0, letterSpacing: "-0.01em" },
   tally: { display: "flex", alignItems: "center", gap: 6, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, opacity: 0.7 },
-  iconBtnLight: { background: "transparent", border: "1px solid rgba(233,228,214,0.25)", borderRadius: 8, color: "#E9E4D6", padding: 6, cursor: "pointer" },
-  nav: { display: "flex", gap: 4, padding: "0 16px 14px", overflowX: "auto" },
-  navBtn: { fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, padding: "7px 13px", borderRadius: 20, border: "1px solid rgba(233,228,214,0.18)", background: "transparent", color: "rgba(233,228,214,0.65)", cursor: "pointer", whiteSpace: "nowrap" },
-  navBtnActive: { background: "#B08D57", borderColor: "#B08D57", color: "#1B2A28" },
-  paperWrap: { flex: 1, padding: "0 12px 12px" },
+  iconBtnLight: { background: "transparent", border: "1px solid rgba(233,228,214,0.25)", borderRadius: 8, color: "#E9E4D6", padding: 8, cursor: "pointer" },
+  paperWrap: { flex: 1, padding: "0 12px 20px" },
   paper: { background: "#EDE8DA", borderRadius: 14, padding: "22px 18px", color: "#2C2A22", minHeight: 420, boxShadow: "0 12px 30px rgba(0,0,0,0.25)" },
-  footer: { display: "flex", justifyContent: "space-between", padding: "10px 20px 22px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: "rgba(233,228,214,0.55)" },
+  tabBar: {
+    flexShrink: 0,
+    display: "flex",
+    justifyContent: "space-around",
+    background: "#0D1613",
+    borderTop: "1px solid rgba(233,228,214,0.1)",
+    padding: "8px 4px calc(env(safe-area-inset-bottom, 0px) + 8px)",
+  },
+  tabBtn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 3,
+    background: "transparent",
+    border: "none",
+    color: "rgba(233,228,214,0.5)",
+    padding: "6px 10px",
+    cursor: "pointer",
+    minWidth: 56,
+  },
+  tabBtnActive: { color: "#B08D57" },
+  tabLabel: { fontSize: 10.5, fontWeight: 600, letterSpacing: "0.01em" },
   sectionLabel: { display: "flex", alignItems: "baseline", gap: 10, fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600, marginBottom: 14, color: "#2C2A22" },
   sectionNum: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 400, color: "#B08D57", letterSpacing: "0.05em" },
   ticketGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 26 },
@@ -420,20 +466,20 @@ const styles = {
   debtRow: { display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#F7F4EA", borderRadius: 8, fontSize: 13 },
   debtName: { fontWeight: 500 },
   debtAmount: { marginLeft: "auto", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, color: "#9B4A36" },
-  suggestRow: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", background: "#F7F4EA", border: "1px solid rgba(44,42,34,0.12)", borderRadius: 8, fontSize: 13, marginBottom: 6, cursor: "pointer", fontFamily: "'Inter', sans-serif", textAlign: "left" },
+  suggestRow: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "11px 12px", background: "#F7F4EA", border: "1px solid rgba(44,42,34,0.12)", borderRadius: 8, fontSize: 13, marginBottom: 6, cursor: "pointer", fontFamily: "'Inter', sans-serif", textAlign: "left" },
   emptyNote: { fontSize: 13, opacity: 0.55, fontStyle: "italic", padding: "8px 0 4px" },
   receiptRow: { display: "flex", alignItems: "center", gap: 10, padding: "12px 12px 12px 4px", background: "#F7F4EA", borderRadius: 6, position: "relative" },
   receiptPerf: { width: 3, alignSelf: "stretch", background: "repeating-linear-gradient(to bottom, rgba(44,42,34,0.25) 0, rgba(44,42,34,0.25) 4px, transparent 4px, transparent 9px)", borderRadius: 2 },
   receiptDesc: { fontSize: 13.5, fontWeight: 500 },
   receiptMeta: { fontSize: 11.5, opacity: 0.55, marginTop: 2 },
   receiptAmount: { fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: 14 },
-  iconBtn: { background: "transparent", border: "none", color: "#9B4A36", opacity: 0.5, cursor: "pointer", padding: 4 },
+  iconBtn: { background: "transparent", border: "none", color: "#9B4A36", opacity: 0.5, cursor: "pointer", padding: 8 },
   formGroup: { marginBottom: 16 },
   label: { display: "block", fontSize: 11.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", opacity: 0.55, marginBottom: 6 },
-  input: { width: "100%", padding: "10px 12px", fontSize: 14, fontFamily: "'Inter', sans-serif", border: "1px solid rgba(44,42,34,0.2)", borderRadius: 7, background: "#F7F4EA", color: "#2C2A22" },
+  input: { width: "100%", padding: "12px", fontSize: 16, fontFamily: "'Inter', sans-serif", border: "1px solid rgba(44,42,34,0.2)", borderRadius: 7, background: "#F7F4EA", color: "#2C2A22" },
   pillRow: { display: "flex", flexWrap: "wrap", gap: 6 },
-  pill: { padding: "7px 12px", fontSize: 12.5, fontWeight: 500, borderRadius: 20, border: "1px solid rgba(44,42,34,0.2)", background: "#F7F4EA", color: "#2C2A22", cursor: "pointer" },
+  pill: { padding: "9px 14px", fontSize: 13, fontWeight: 500, borderRadius: 20, border: "1px solid rgba(44,42,34,0.2)", background: "#F7F4EA", color: "#2C2A22", cursor: "pointer" },
   pillActive: { background: "#2C2A22", borderColor: "#2C2A22", color: "#EDE8DA" },
   customRow: { display: "flex", alignItems: "center", gap: 8, fontSize: 13 },
-  primaryBtn: { width: "100%", padding: "12px", fontSize: 14, fontWeight: 600, borderRadius: 8, border: "none", background: "#2C2A22", color: "#EDE8DA", cursor: "pointer", marginTop: 4 },
+  primaryBtn: { width: "100%", padding: "14px", fontSize: 15, fontWeight: 600, borderRadius: 10, border: "none", background: "#2C2A22", color: "#EDE8DA", cursor: "pointer", marginTop: 4 },
 };
