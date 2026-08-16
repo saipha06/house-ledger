@@ -1,15 +1,50 @@
-# The House Ledger
+# Casa
 
-A shared expense tracker for a 4-person household. React + Vite PWA, backed by Supabase (Postgres + auth + realtime).
+A shared household app for a 4-person house: expenses with debt-simplification, a shared grocery list, and a weighted spin-the-wheel game picker. React + Vite PWA, styled with Tailwind CSS v4, animated with Framer Motion, backed by Supabase (Postgres + auth + realtime).
+
+**No extra setup for this version** — push to GitHub as usual and Vercel installs the new dependencies (`tailwindcss`, `@tailwindcss/vite`, `framer-motion`) automatically from `package.json` on the next build. Nothing changes on the Supabase side.
+
 
 ## 1. Set up Supabase
 
+**Already ran the schema before and just adding Groceries/Games?** Skip to step 1a below and run only that snippet — no need to touch anything else.
+
 1. Open your Supabase project → **SQL Editor** → New query.
-2. Paste the contents of `supabase/schema.sql` and run it. This creates the `members`, `expenses`, `expense_splits`, and `settlements` tables with row-level security enabled.
-3. Go to **Authentication → Providers** and make sure **Email** is enabled. Turn **off** "Confirm email" if you want the magic link to work with zero friction (optional — it works either way).
-4. Go to **Authentication → URL Configuration** and set:
-   - **Site URL**: your deployed URL (you'll get this in step 3 below — you can come back and update it after deploying)
-   - **Redirect URLs**: add both `http://localhost:5173` (for local testing) and your deployed URL
+2. Paste the contents of `supabase/schema.sql` and run it. This creates the `members`, `expenses`, `expense_splits`, `settlements`, `grocery_items`, and `games` tables with row-level security enabled. (Safe to re-run in full even if you ran an earlier version — every table uses `if not exists`.)
+
+### 1a. Incremental update (Groceries + Games only)
+
+If your `members`/`expenses`/`settlements` tables already exist and you just want the two new features, run this instead:
+
+```sql
+create table if not exists grocery_items (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  added_by uuid references members(id),
+  checked boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists games (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  weight numeric not null default 1 check (weight >= 0),
+  created_at timestamptz default now()
+);
+
+alter table grocery_items enable row level security;
+alter table games enable row level security;
+
+create policy "authenticated all grocery_items" on grocery_items
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create policy "authenticated all games" on games
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+alter publication supabase_realtime add table grocery_items, games;
+```
+3. Go to **Authentication → Providers → Email** and turn **OFF "Confirm email"**. This is the important one — with it off, creating an account signs you in immediately with no verification email, so you never hit Supabase's email rate limits.
+4. (Site URL / Redirect URLs don't matter for this flow since there's no email link to redirect from — safe to leave defaults.)
 5. Go to **Project Settings → API** and copy:
    - **Project URL**
    - **anon public** key
@@ -37,9 +72,13 @@ Open the local URL, sign in with your email, check your inbox for the magic link
 
 ## 4. Everyone joins
 
-1. Each housemate opens the Vercel URL, enters their email, and taps the magic link sent to their inbox.
-2. First time in, they'll be asked their name — this creates their row in the shared `members` table, linked to their login.
-3. On iPhone: Share button → **Add to Home Screen**. It opens full-screen, no browser bar, like a real app.
+1. Each housemate opens the Vercel URL, clicks **Create account**, picks any email (doesn't need to be real or verified) and a password of their choosing.
+2. They're signed in immediately — no email confirmation step.
+3. First time in, they'll be asked their name — this creates their row in the shared `members` table, linked to their login.
+4. Next time, they use **Sign in** with the same email/password.
+5. On iPhone: Share button → **Add to Home Screen**. It opens full-screen, no browser bar, like a real app.
+
+**Note:** there's no self-service "forgot password" flow set up (that requires email sending again). If someone forgets their password, go to Supabase → **Authentication → Users**, find them, and reset it manually from there.
 
 ## How it works
 

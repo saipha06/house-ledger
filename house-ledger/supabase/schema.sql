@@ -37,6 +37,22 @@ create table if not exists settlements (
   date timestamptz default now()
 );
 
+-- Groceries and Games (added later)
+create table if not exists grocery_items (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  added_by uuid references members(id),
+  checked boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists games (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  weight numeric not null default 1 check (weight >= 0),
+  created_at timestamptz default now()
+);
+
 create index if not exists idx_splits_expense on expense_splits(expense_id);
 create index if not exists idx_splits_member on expense_splits(member_id);
 create index if not exists idx_expenses_date on expenses(date desc);
@@ -47,6 +63,8 @@ alter table members enable row level security;
 alter table expenses enable row level security;
 alter table expense_splits enable row level security;
 alter table settlements enable row level security;
+alter table grocery_items enable row level security;
+alter table games enable row level security;
 
 create policy "authenticated all members" on members
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
@@ -60,5 +78,11 @@ create policy "authenticated all expense_splits" on expense_splits
 create policy "authenticated all settlements" on settlements
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+create policy "authenticated all grocery_items" on grocery_items
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create policy "authenticated all games" on games
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
 -- Enable realtime updates on these tables (safe to run even if already enabled)
-alter publication supabase_realtime add table members, expenses, expense_splits, settlements;
+alter publication supabase_realtime add table members, expenses, expense_splits, settlements, grocery_items, games;

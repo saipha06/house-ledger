@@ -1,17 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icon-192.png", "icon-512.png"],
       manifest: {
-        name: "House Ledger",
-        short_name: "Ledger",
-        description: "Shared expense tracker for the house",
+        name: "Casa",
+        short_name: "Casa",
+        description: "Shared household app for expenses, groceries, and game night",
         theme_color: "#12201C",
         background_color: "#12201C",
         display: "standalone",

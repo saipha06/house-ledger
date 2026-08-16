@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabaseClient";
 import { LogIn, UserPlus } from "lucide-react";
 
@@ -23,143 +24,88 @@ export default function Auth() {
   };
 
   return (
-    <div style={wrap}>
-      <div style={card}>
-        <div style={eyebrow}>household accounts</div>
-        <h1 style={title}>The House Ledger</h1>
+    <div className="h-dvh bg-ink flex items-center justify-center p-5 font-sans">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
+      >
+        <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">household accounts</div>
+        <h1 className="font-display text-[26px] font-semibold m-0">Casa</h1>
 
-        <div style={tabRow}>
-          <button
-            className="tap-btn"
-            style={{ ...tab, ...(mode === "signin" ? tabActive : {}) }}
-            onClick={() => {
-              setMode("signin");
-              setError("");
-            }}
-            type="button"
-          >
-            Sign in
-          </button>
-          <button
-            className="tap-btn"
-            style={{ ...tab, ...(mode === "signup" ? tabActive : {}) }}
-            onClick={() => {
-              setMode("signup");
-              setError("");
-            }}
-            type="button"
-          >
-            Create account
-          </button>
+        <div className="flex gap-1.5 mt-4">
+          {[
+            ["signin", "Sign in"],
+            ["signup", "Create account"],
+          ].map(([key, label]) => (
+            <motion.button
+              key={key}
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={() => {
+                setMode(key);
+                setError("");
+              }}
+              className={`flex-1 py-2 text-[13px] font-semibold rounded-full border transition-colors ${
+                mode === key ? "bg-charcoal border-charcoal text-paper" : "bg-transparent border-charcoal/20 text-charcoal"
+              }`}
+            >
+              {label}
+            </motion.button>
+          ))}
         </div>
 
-        <form onSubmit={submit} style={{ marginTop: 16 }}>
-          <label style={label}>Email</label>
+        <form onSubmit={submit} className="mt-4">
+          <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5 mt-3">Email</label>
           <input
-            style={input}
             type="email"
             required
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
           />
-          <label style={label}>Password</label>
+          <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5 mt-3">Password</label>
           <input
-            style={input}
             type="password"
             required
             minLength={6}
             placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
           />
-          {error && <div style={errorText}>{error}</div>}
-          <button className="tap-btn" style={btn} disabled={loading}>
-            {mode === "signin" ? <LogIn size={15} style={iconStyle} /> : <UserPlus size={15} style={iconStyle} />}
+
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="text-[12.5px] text-rust mt-2 overflow-hidden"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            disabled={loading}
+            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-5 flex items-center justify-center gap-1.5 disabled:opacity-60"
+          >
+            {mode === "signin" ? <LogIn size={15} /> : <UserPlus size={15} />}
             {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
-          </button>
+          </motion.button>
         </form>
 
         {mode === "signup" && (
-          <p style={hint}>Pick any password you'll remember — there's no email verification step, so you're in as soon as you create the account.</p>
+          <p className="text-[11.5px] opacity-55 mt-3 leading-relaxed">
+            Pick any password you'll remember — there's no email verification step, so you're in as soon as you create the account.
+          </p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
-
-const wrap = {
-  height: "100dvh",
-  background: "#12201C",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontFamily: "'Inter', system-ui, sans-serif",
-  padding: 20,
-};
-const card = {
-  width: "100%",
-  maxWidth: 360,
-  background: "#EDE8DA",
-  borderRadius: 14,
-  padding: "28px 24px",
-  color: "#2C2A22",
-  boxShadow: "0 12px 30px rgba(0,0,0,0.25)",
-};
-const eyebrow = {
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: 11,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  opacity: 0.55,
-  marginBottom: 4,
-};
-const title = { fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, margin: 0 };
-const tabRow = { display: "flex", gap: 6, marginTop: 18 };
-const tab = {
-  flex: 1,
-  padding: "8px 10px",
-  fontSize: 13,
-  fontWeight: 600,
-  borderRadius: 20,
-  border: "1px solid rgba(44,42,34,0.2)",
-  background: "transparent",
-  color: "#2C2A22",
-  cursor: "pointer",
-};
-const tabActive = { background: "#2C2A22", borderColor: "#2C2A22", color: "#EDE8DA" };
-const label = {
-  display: "block",
-  fontSize: 11.5,
-  fontWeight: 600,
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  opacity: 0.55,
-  marginBottom: 6,
-  marginTop: 12,
-};
-const input = {
-  width: "100%",
-  padding: "10px 12px",
-  fontSize: 16,
-  fontFamily: "'Inter', sans-serif",
-  border: "1px solid rgba(44,42,34,0.2)",
-  borderRadius: 7,
-  background: "#F7F4EA",
-  color: "#2C2A22",
-};
-const btn = {
-  width: "100%",
-  padding: "12px",
-  fontSize: 16,
-  fontWeight: 600,
-  borderRadius: 8,
-  border: "none",
-  background: "#2C2A22",
-  color: "#EDE8DA",
-  cursor: "pointer",
-  marginTop: 16,
-};
-const iconStyle = { marginRight: 6, verticalAlign: -3 };
-const errorText = { fontSize: 12.5, color: "#9B4A36", marginTop: 8 };
-const hint = { fontSize: 11.5, opacity: 0.55, marginTop: 12, lineHeight: 1.4 };

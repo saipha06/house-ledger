@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabaseClient";
 
-// Shown once per person, right after their first magic-link login, so their
-// auth account gets linked to a friendly name in the shared `members` table.
+// Shown once per person, right after their first login, so their auth
+// account gets linked to a friendly name in the shared `members` table.
 export default function Onboarding({ session, onDone }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -14,11 +15,7 @@ export default function Onboarding({ session, onDone }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("members")
-      .insert({
-        auth_user_id: session.user.id,
-        email: session.user.email,
-        name: name.trim(),
-      })
+      .insert({ auth_user_id: session.user.id, email: session.user.email, name: name.trim() })
       .select()
       .single();
     setLoading(false);
@@ -27,74 +24,45 @@ export default function Onboarding({ session, onDone }) {
   };
 
   return (
-    <div style={wrap}>
-      <div style={card}>
-        <div style={eyebrow}>one-time setup</div>
-        <h1 style={title}>What should we call you?</h1>
-        <form onSubmit={submit} style={{ marginTop: 16 }}>
+    <div className="h-dvh bg-ink flex items-center justify-center p-5 font-sans">
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
+      >
+        <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">one-time setup</div>
+        <h1 className="font-display text-[22px] font-semibold m-0">What should we call you?</h1>
+        <form onSubmit={submit} className="mt-4">
           <input
-            style={input}
             required
+            autoFocus
             placeholder="e.g. Phani"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
           />
-          {error && <div style={errorText}>{error}</div>}
-          <button className="tap-btn" style={btn} disabled={loading}>
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="text-[12.5px] text-rust mt-2 overflow-hidden"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            disabled={loading}
+            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-4 disabled:opacity-60"
+          >
             {loading ? "Saving…" : "Join the ledger"}
-          </button>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
-
-const wrap = {
-  height: "100dvh",
-  background: "#12201C",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontFamily: "'Inter', system-ui, sans-serif",
-  padding: 20,
-};
-const card = {
-  width: "100%",
-  maxWidth: 360,
-  background: "#EDE8DA",
-  borderRadius: 14,
-  padding: "28px 24px",
-  color: "#2C2A22",
-  boxShadow: "0 12px 30px rgba(0,0,0,0.25)",
-};
-const eyebrow = {
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: 11,
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  opacity: 0.55,
-  marginBottom: 4,
-};
-const title = { fontFamily: "'Fraunces', serif", fontSize: 22, fontWeight: 600, margin: 0 };
-const input = {
-  width: "100%",
-  padding: "10px 12px",
-  fontSize: 16,
-  border: "1px solid rgba(44,42,34,0.2)",
-  borderRadius: 7,
-  background: "#F7F4EA",
-  color: "#2C2A22",
-  marginBottom: 10,
-};
-const btn = {
-  width: "100%",
-  padding: "12px",
-  fontSize: 16,
-  fontWeight: 600,
-  borderRadius: 8,
-  border: "none",
-  background: "#2C2A22",
-  color: "#EDE8DA",
-  cursor: "pointer",
-};
-const errorText = { fontSize: 12.5, color: "#9B4A36", marginBottom: 8 };

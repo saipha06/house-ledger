@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "./supabaseClient";
 import Auth from "./components/Auth";
 import Onboarding from "./components/Onboarding";
@@ -10,6 +11,8 @@ export default function App() {
   const [members, setMembers] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [settlements, setSettlements] = useState([]);
+  const [groceries, setGroceries] = useState([]);
+  const [games, setGames] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   // Track auth session
@@ -20,14 +23,18 @@ export default function App() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    const [membersRes, expensesRes, settlementsRes] = await Promise.all([
+    const [membersRes, expensesRes, settlementsRes, groceriesRes, gamesRes] = await Promise.all([
       supabase.from("members").select("*").order("created_at"),
       supabase.from("expenses").select("*, expense_splits(*)").order("date", { ascending: false }),
       supabase.from("settlements").select("*").order("date", { ascending: false }),
+      supabase.from("grocery_items").select("*").order("created_at"),
+      supabase.from("games").select("*").order("created_at"),
     ]);
     setMembers(membersRes.data || []);
     setExpenses(expensesRes.data || []);
     setSettlements(settlementsRes.data || []);
+    setGroceries(groceriesRes.data || []);
+    setGames(gamesRes.data || []);
   }, []);
 
   // Once we have a session, resolve "me" (the members row) and load data
@@ -60,36 +67,34 @@ export default function App() {
       .on("postgres_changes", { event: "*", schema: "public", table: "expense_splits" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "settlements" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "members" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "grocery_items" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, fetchAll)
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [me, fetchAll]);
 
-  if (session === undefined) return <LoadingScreen text="opening the ledger…" />;
+  if (session === undefined) return <LoadingScreen />;
   if (!session) return <Auth />;
-  if (dataLoading) return <LoadingScreen text="loading your household…" />;
+  if (dataLoading) return <LoadingScreen />;
   if (!me) return <Onboarding session={session} onDone={(row) => setMe(row)} />;
 
   return (
-    <Ledger me={me} members={members} expenses={expenses} settlements={settlements} refresh={fetchAll} />
+    <Ledger me={me} members={members} expenses={expenses} settlements={settlements} groceries={groceries} games={games} refresh={fetchAll} />
   );
 }
 
-function LoadingScreen({ text }) {
+function LoadingScreen() {
+  const pulse = { animate: { opacity: [0.5, 0.9, 0.5] }, transition: { duration: 1.3, repeat: Infinity, ease: "easeInOut" } };
   return (
-    <div
-      style={{
-        height: "100dvh",
-        background: "#12201C",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'IBM Plex Mono', monospace",
-        color: "#E9E4D6",
-        opacity: 0.6,
-        fontSize: 13,
-      }}
-    >
-      {text}
+    <div className="h-dvh bg-ink flex items-center justify-center p-5">
+      <div className="w-full max-w-[340px] bg-paper rounded-2xl p-6 shadow-2xl">
+        <motion.div {...pulse} className="bg-charcoal/15 rounded h-2.5 w-2/5" />
+        <motion.div {...pulse} className="bg-charcoal/15 rounded h-5 w-[70%] mt-2" />
+        <div className="grid grid-cols-2 gap-2.5 mt-5">
+          <motion.div {...pulse} className="h-[74px] rounded-lg bg-charcoal/10 border border-dashed border-charcoal/20" />
+          <motion.div {...pulse} className="h-[74px] rounded-lg bg-charcoal/10 border border-dashed border-charcoal/20" />
+        </div>
+      </div>
     </div>
   );
 }
