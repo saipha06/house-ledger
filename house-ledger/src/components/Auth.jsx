@@ -42,7 +42,6 @@ export default function Auth() {
         >
           <Home size={26} strokeWidth={2} />
         </div>
-        <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">household accounts</div>
         <h1 className="font-display text-gradient text-[28px] font-semibold m-0">Casa</h1>
 
         <div className="flex gap-1.5 mt-4">

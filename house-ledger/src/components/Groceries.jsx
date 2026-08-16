@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Check } from "lucide-react";
+import { Plus, X, Check, ExternalLink } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
 import Avatar from "./Avatar";
@@ -38,6 +38,28 @@ export default function Groceries({ items, members, me, refresh }) {
 
   return (
     <div>
+      <SectionLabel n="🛒" title="Order online" />
+      <div className="flex gap-2 mb-[22px]">
+        <a
+          href="https://www.doordash.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium rounded-full border border-charcoal/20 bg-paper-2 text-charcoal"
+        >
+          DoorDash
+          <ExternalLink size={12} className="opacity-60" />
+        </a>
+        <a
+          href="https://www.ubereats.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium rounded-full border border-charcoal/20 bg-paper-2 text-charcoal"
+        >
+          Uber Eats
+          <ExternalLink size={12} className="opacity-60" />
+        </a>
+      </div>
+
       <SectionLabel n="01" title="Add an item" />
       <div className="flex gap-2 mb-[22px]">
         <input

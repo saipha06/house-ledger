@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, ShoppingBasket, Dices, Users, LogOut, Receipt } from "lucide-react";
+import { Wallet, ShoppingBasket, Dices, Shuffle, Users, LogOut, Receipt } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import Avatar from "./Avatar";
 import BackgroundArt from "./BackgroundArt";
@@ -8,12 +8,14 @@ import Celebration from "./Celebration";
 import Money from "./Money";
 import Groceries from "./Groceries";
 import Games from "./Games";
+import Fate from "./Fate";
 import House from "./House";
 
 const TABS = [
   ["money", "Money", Wallet],
   ["groceries", "Groceries", ShoppingBasket],
-  ["games", "Games", Dices],
+  ["games", "Play", Dices],
+  ["fate", "Fate", Shuffle],
   ["house", "House", Users],
 ];
 
@@ -39,9 +41,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
           <div className="flex items-center gap-3">
             <Avatar name={me.name} size={38} ring />
             <div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">
-                household accounts · {me.name}
-              </div>
+              <div className="font-display italic text-[14px] opacity-70 mb-0.5">{me.name}</div>
               <h1 className="font-display text-gradient text-[26px] font-semibold m-0 tracking-tight">Casa</h1>
             </div>
           </div>
@@ -76,6 +76,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
                 )}
                 {section === "groceries" && <Groceries items={groceries} members={members} me={me} refresh={refresh} />}
                 {section === "games" && <Games games={games} refresh={refresh} onCelebrate={setCelebration} />}
+                {section === "fate" && <Fate onCelebrate={setCelebration} />}
                 {section === "house" && <House members={members} onSave={saveMembers} busy={busy} />}
               </motion.div>
             </AnimatePresence>
