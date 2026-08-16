@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, ShoppingBasket, Dices, Users, LogOut, Receipt } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import Avatar from "./Avatar";
+import BackgroundArt from "./BackgroundArt";
 import Celebration from "./Celebration";
 import Money from "./Money";
 import Groceries from "./Groceries";
@@ -28,16 +30,20 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
   };
 
   return (
-    <div className="h-dvh bg-ink flex flex-col font-sans">
+    <div className="relative h-dvh bg-ink flex flex-col font-sans overflow-hidden">
+      <BackgroundArt />
       <Celebration type={celebration} onDone={() => setCelebration(null)} />
 
-      <div className="w-full max-w-[480px] mx-auto flex flex-col flex-1 min-h-0 overflow-y-auto [-webkit-overflow-scrolling:touch]">
+      <div className="relative z-10 w-full max-w-[480px] mx-auto flex flex-col flex-1 min-h-0 overflow-y-auto [-webkit-overflow-scrolling:touch]">
         <div className="flex justify-between items-end safe-top px-5 pb-3.5 text-cream shrink-0">
-          <div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">
-              household accounts · {me.name}
+          <div className="flex items-center gap-3">
+            <Avatar name={me.name} size={38} ring />
+            <div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">
+                household accounts · {me.name}
+              </div>
+              <h1 className="font-display text-gradient text-[26px] font-semibold m-0 tracking-tight">Casa</h1>
             </div>
-            <h1 className="font-display text-[26px] font-semibold m-0 tracking-tight">Casa</h1>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 font-mono text-xs opacity-70">
@@ -56,8 +62,8 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
         </div>
 
         <div className="flex-1 px-3 pb-5">
-          <div className="bg-paper rounded-2xl p-[22px_18px] text-charcoal min-h-[420px] shadow-2xl">
-            <AnimatePresence mode="wait">
+          <div className="relative bg-paper rounded-2xl p-[22px_18px] text-charcoal min-h-[420px] shadow-2xl">
+            <AnimatePresence mode="popLayout">
               <motion.div
                 key={section}
                 initial={{ opacity: 0, x: 8 }}
@@ -77,7 +83,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
         </div>
       </div>
 
-      <nav className="shrink-0 flex justify-around bg-ink-deep border-t border-cream/10 pt-2 px-1 safe-bottom">
+      <nav className="relative z-10 shrink-0 flex justify-around bg-ink-deep border-t border-white/10 pt-2 px-1 safe-bottom shadow-[0_-12px_40px_rgba(0,0,0,0.45)]">
         {TABS.map(([key, label, Icon]) => {
           const active = section === key;
           return (
@@ -93,10 +99,14 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
                 <motion.div
                   layoutId="tab-indicator"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  className="absolute -top-0.5 w-[18px] h-[2.5px] rounded bg-brass"
+                  className="absolute -top-0.5 w-[18px] h-[2.5px] rounded bg-brass glow-brass"
                 />
               )}
-              <motion.div animate={active ? { scale: [0.7, 1] } : {}} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+              <motion.div
+                animate={active ? { scale: [0.7, 1] } : {}}
+                transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                className={active ? "glow-brass" : ""}
+              >
                 <Icon size={20} strokeWidth={active ? 2.4 : 1.8} />
               </motion.div>
               <span className="text-[10.5px] font-semibold tracking-wide">{label}</span>

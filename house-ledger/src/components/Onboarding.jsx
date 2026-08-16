@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabaseClient";
+import Avatar from "./Avatar";
+import BackgroundArt from "./BackgroundArt";
 
 // Shown once per person, right after their first login, so their auth
 // account gets linked to a friendly name in the shared `members` table.
@@ -24,15 +26,19 @@ export default function Onboarding({ session, onDone }) {
   };
 
   return (
-    <div className="h-dvh bg-ink flex items-center justify-center p-5 font-sans">
+    <div className="relative h-dvh bg-ink flex items-center justify-center p-5 font-sans overflow-hidden">
+      <BackgroundArt />
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
+        className="relative z-10 w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
       >
-        <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">one-time setup</div>
-        <h1 className="font-display text-[22px] font-semibold m-0">What should we call you?</h1>
+        <div className="flex justify-center mb-4">
+          <Avatar name={name || "?"} size={64} ring />
+        </div>
+        <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1 text-center">one-time setup</div>
+        <h1 className="font-display text-gradient text-[22px] font-semibold m-0 text-center">What should we call you?</h1>
         <form onSubmit={submit} className="mt-4">
           <input
             required
@@ -57,7 +63,7 @@ export default function Onboarding({ session, onDone }) {
           <motion.button
             whileTap={{ scale: 0.96 }}
             disabled={loading}
-            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-4 disabled:opacity-60"
+            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer mt-4 disabled:opacity-60"
           >
             {loading ? "Saving…" : "Join the ledger"}
           </motion.button>

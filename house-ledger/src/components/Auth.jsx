@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabaseClient";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, Home } from "lucide-react";
+import SignInArt from "./SignInArt";
 
 export default function Auth() {
   const [mode, setMode] = useState("signin"); // signin | signup
@@ -24,15 +25,25 @@ export default function Auth() {
   };
 
   return (
-    <div className="h-dvh bg-ink flex items-center justify-center p-5 font-sans">
+    <div className="relative h-dvh bg-ink flex items-center justify-center p-5 font-sans overflow-hidden">
+      <SignInArt />
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
+        className="relative z-10 w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
       >
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 text-white"
+          style={{
+            background: "linear-gradient(135deg, #f0b429, #e2572e)",
+            boxShadow: "0 10px 30px -8px rgba(240, 176, 41, 0.6)",
+          }}
+        >
+          <Home size={26} strokeWidth={2} />
+        </div>
         <div className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-55 mb-1">household accounts</div>
-        <h1 className="font-display text-[26px] font-semibold m-0">Casa</h1>
+        <h1 className="font-display text-gradient text-[28px] font-semibold m-0">Casa</h1>
 
         <div className="flex gap-1.5 mt-4">
           {[
@@ -48,7 +59,7 @@ export default function Auth() {
                 setError("");
               }}
               className={`flex-1 py-2 text-[13px] font-semibold rounded-full border transition-colors ${
-                mode === key ? "bg-charcoal border-charcoal text-paper" : "bg-transparent border-charcoal/20 text-charcoal"
+                mode === key ? "btn-gradient border-transparent" : "bg-transparent border-charcoal/20 text-charcoal"
               }`}
             >
               {label}
@@ -93,7 +104,7 @@ export default function Auth() {
           <motion.button
             whileTap={{ scale: 0.96 }}
             disabled={loading}
-            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-5 flex items-center justify-center gap-1.5 disabled:opacity-60"
+            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer mt-5 flex items-center justify-center gap-1.5 disabled:opacity-60"
           >
             {mode === "signin" ? <LogIn size={15} /> : <UserPlus size={15} />}
             {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}

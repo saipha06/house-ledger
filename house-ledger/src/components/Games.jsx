@@ -4,7 +4,7 @@ import { Plus, X, Dices } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
 
-const PALETTE = ["#B08D57", "#6E8B74", "#9B4A36", "#5C7A93", "#8A6FA3", "#B0764F", "#4E8B7C", "#A3644B"];
+const PALETTE = ["#F0B429", "#E2572E", "#9BC53D", "#C2703D", "#D4A017", "#8B5A2B", "#F2994A", "#B8461F"];
 const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
 export default function Games({ games, refresh, onCelebrate }) {
@@ -30,7 +30,7 @@ export default function Games({ games, refresh, onCelebrate }) {
   const gradient =
     segments.length > 0
       ? `conic-gradient(${segments.map((s) => `${s.color} ${s.start}deg ${s.start + s.angle}deg`).join(", ")})`
-      : "#F7F4EA";
+      : "#F5ECD9";
 
   const addGame = async () => {
     const n = name.trim();
@@ -94,7 +94,7 @@ export default function Games({ games, refresh, onCelebrate }) {
             animate={{ rotate: rotation }}
             transition={spinning ? { duration: 4.2, ease: [0.15, 0.65, 0.1, 1] } : { duration: 0 }}
             style={{ background: gradient }}
-            className="w-full h-full rounded-full border-4 border-charcoal shadow-xl"
+            className="w-full h-full rounded-full border-4 border-white/20 shadow-[0_0_50px_-10px_rgba(240,176,41,0.5)]"
           />
           <motion.button
             whileTap={{ scale: 0.9 }}
@@ -180,7 +180,7 @@ export default function Games({ games, refresh, onCelebrate }) {
           value={weight}
           onChange={(e) => setWeight(e.target.value.replace(/[^0-9.]/g, ""))}
         />
-        <motion.button whileTap={name.trim() ? { scale: 0.9 } : {}} onClick={addGame} disabled={!name.trim()} className="w-[46px] shrink-0 rounded-lg bg-charcoal text-paper flex items-center justify-center disabled:opacity-40">
+        <motion.button whileTap={name.trim() ? { scale: 0.9 } : {}} onClick={addGame} disabled={!name.trim()} className="w-[46px] shrink-0 rounded-lg btn-gradient flex items-center justify-center disabled:opacity-40">
           <Plus size={18} />
         </motion.button>
       </div>

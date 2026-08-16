@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, Users } from "lucide-react";
+import { Check } from "lucide-react";
 import SectionLabel from "./SectionLabel";
+import Avatar from "./Avatar";
 
 export default function House({ members, onSave, busy }) {
   const [local, setLocal] = useState(members);
@@ -18,9 +19,9 @@ export default function House({ members, onSave, busy }) {
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="flex items-center gap-2 text-[13px]"
+            className="flex items-center gap-2.5 text-[13px]"
           >
-            <Users size={14} className="opacity-50" />
+            <Avatar name={m.name} size={30} ring />
             <input
               value={m.name}
               onChange={(e) => update(m.id, e.target.value)}
@@ -33,7 +34,7 @@ export default function House({ members, onSave, busy }) {
         whileTap={{ scale: 0.97 }}
         disabled={busy}
         onClick={() => onSave(local)}
-        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
       >
         <Check size={15} />
         Save names

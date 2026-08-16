@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient";
 import { computeBalances, simplifyDebts, fmt } from "../lib/balances";
 import SectionLabel from "./SectionLabel";
 import AnimatedAmount from "./AnimatedAmount";
+import Avatar from "./Avatar";
 
 const SUBTABS = [
   ["balances", "Balances", Scale],
@@ -15,7 +16,7 @@ const SUBTABS = [
 
 const pillClass = (active) =>
   `px-3.5 py-2 text-[13px] font-medium rounded-full border cursor-pointer ${
-    active ? "bg-charcoal border-charcoal text-paper" : "bg-paper-2 border-charcoal/20 text-charcoal"
+    active ? "btn-gradient border-transparent" : "bg-paper-2 border-charcoal/20 text-charcoal"
   }`;
 const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
@@ -72,14 +73,14 @@ export default function Money({ members, expenses, settlements, refresh, onCeleb
               whileTap={{ scale: 0.94 }}
               onClick={() => setView(key)}
               className={`relative px-3.5 py-1.5 text-[12.5px] font-semibold rounded-full border whitespace-nowrap flex items-center ${
-                active ? "text-paper" : "text-charcoal border-charcoal/20"
+                active ? "text-white border-transparent" : "text-charcoal border-charcoal/20"
               }`}
             >
               {active && (
                 <motion.div
                   layoutId="money-subnav-indicator"
                   transition={{ type: "spring", stiffness: 500, damping: 32 }}
-                  className="absolute inset-0 bg-charcoal rounded-full"
+                  className="absolute inset-0 btn-gradient rounded-full"
                 />
               )}
               <span className="relative flex items-center">
@@ -91,18 +92,20 @@ export default function Money({ members, expenses, settlements, refresh, onCeleb
         })}
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-          {view === "balances" && (
-            <BalancesView balances={balances} members={members} simplified={simplified} memberName={memberName} />
-          )}
-          {view === "history" && <HistoryView expenses={expenses} memberName={memberName} onDelete={deleteExpense} busy={busy} />}
-          {view === "add" && <AddExpenseView members={members} onAdd={addExpense} busy={busy} />}
-          {view === "settle" && (
-            <SettleView members={members} simplified={simplified} memberName={memberName} onSettle={addSettlement} busy={busy} />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <div className="relative">
+        <AnimatePresence mode="popLayout">
+          <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            {view === "balances" && (
+              <BalancesView balances={balances} members={members} simplified={simplified} memberName={memberName} />
+            )}
+            {view === "history" && <HistoryView expenses={expenses} memberName={memberName} onDelete={deleteExpense} busy={busy} />}
+            {view === "add" && <AddExpenseView members={members} onAdd={addExpense} busy={busy} />}
+            {view === "settle" && (
+              <SettleView members={members} simplified={simplified} memberName={memberName} onSettle={addSettlement} busy={busy} />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -122,15 +125,23 @@ function BalancesView({ balances, members, simplified, memberName }) {
           const positive = amt > 0.005;
           const negative = amt < -0.005;
           const color = positive ? "text-sage" : negative ? "text-rust" : "text-charcoal/80";
+          const glow = positive ? "glow-sage" : negative ? "glow-rust" : "";
+          const ring = positive
+            ? "border-lime-400/25 shadow-[0_0_24px_-8px_rgba(155,197,61,0.35)]"
+            : negative
+              ? "border-orange-500/25 shadow-[0_0_24px_-8px_rgba(226,87,46,0.35)]"
+              : "border-white/10";
           return (
             <motion.div
               key={m.id}
               variants={{ hidden: { opacity: 0, y: 10, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1 } }}
-              className="relative bg-paper-2 border border-dashed border-charcoal/25 rounded-lg p-3.5 overflow-hidden"
+              className={`relative bg-paper-2 border rounded-lg p-3.5 ${ring}`}
             >
-              <div className="absolute -top-2 right-2.5 w-3.5 h-3.5 rounded-full bg-ink" />
-              <div className="text-xs font-semibold mb-1.5 opacity-75">{m.name}</div>
-              <AnimatedAmount value={Math.abs(amt) < 0.005 ? 0 : amt} className={`font-mono text-xl font-semibold mb-0.5 block ${color}`} />
+              <div className="flex items-center gap-1.5 mb-2">
+                <Avatar name={m.name} size={20} />
+                <div className="text-xs font-semibold opacity-75">{m.name}</div>
+              </div>
+              <AnimatedAmount value={Math.abs(amt) < 0.005 ? 0 : amt} className={`font-mono text-xl font-semibold mb-0.5 block ${color} ${glow}`} />
               <div className="text-[11px] opacity-55">{positive ? "is owed" : negative ? "owes the house" : "all settled"}</div>
             </motion.div>
           );
@@ -153,9 +164,15 @@ function BalancesView({ balances, members, simplified, memberName }) {
                 transition={{ delay: i * 0.04 }}
                 className="flex items-center gap-2 px-3 py-2.5 bg-paper-2 rounded-lg text-[13px]"
               >
-                <span className="font-medium">{memberName(t.from)}</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <Avatar name={memberName(t.from)} size={20} />
+                  {memberName(t.from)}
+                </span>
                 <ArrowRight size={14} className="opacity-50 shrink-0" />
-                <span className="font-medium">{memberName(t.to)}</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <Avatar name={memberName(t.to)} size={20} />
+                  {memberName(t.to)}
+                </span>
                 <span className="ml-auto font-mono font-semibold text-rust">{fmt(t.amount)}</span>
               </motion.div>
             ))}
@@ -191,7 +208,7 @@ function HistoryView({ expenses, memberName, onDelete, busy }) {
               exit={{ opacity: 0, x: 40 }}
               className="flex items-center gap-2.5 pl-1 pr-3 py-3 bg-paper-2 rounded-md relative"
             >
-              <div className="w-[3px] self-stretch rounded bg-[repeating-linear-gradient(to_bottom,rgba(44,42,34,0.25)_0,rgba(44,42,34,0.25)_4px,transparent_4px,transparent_9px)]" />
+              <Avatar name={memberName(exp.paid_by)} size={36} />
               <div className="flex-1 min-w-0">
                 <div className="text-[13.5px] font-medium">{exp.description}</div>
                 <div className="text-[11.5px] opacity-55 mt-0.5">
@@ -266,7 +283,10 @@ function AddExpenseView({ members, onAdd, busy }) {
         <div className="flex flex-wrap gap-1.5">
           {members.map((m) => (
             <motion.button key={m.id} whileTap={{ scale: 0.94 }} onClick={() => setPaidBy(m.id)} className={pillClass(paidBy === m.id)}>
-              {m.name}
+              <span className="inline-flex items-center gap-1.5">
+                <Avatar name={m.name} size={16} />
+                {m.name}
+              </span>
             </motion.button>
           ))}
         </div>
@@ -276,7 +296,10 @@ function AddExpenseView({ members, onAdd, busy }) {
         <div className="flex flex-wrap gap-1.5">
           {members.map((m) => (
             <motion.button key={m.id} whileTap={{ scale: 0.94 }} onClick={() => toggleParticipant(m.id)} className={pillClass(participantIds.includes(m.id))}>
-              {m.name}
+              <span className="inline-flex items-center gap-1.5">
+                <Avatar name={m.name} size={16} />
+                {m.name}
+              </span>
             </motion.button>
           ))}
         </div>
@@ -325,7 +348,7 @@ function AddExpenseView({ members, onAdd, busy }) {
         whileTap={canSubmit ? { scale: 0.97 } : {}}
         disabled={!canSubmit}
         onClick={submit}
-        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-1 flex items-center justify-center gap-1.5 disabled:opacity-40"
+        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer mt-1 flex items-center justify-center gap-1.5 disabled:opacity-40"
       >
         <Plus size={15} />
         Add to ledger
@@ -358,9 +381,15 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
               }}
               className="flex items-center gap-2 w-full px-3 py-2.5 bg-paper-2 border border-charcoal/10 rounded-lg text-[13px] mb-1.5 text-left"
             >
-              <span className="font-medium">{memberName(t.from)}</span>
+              <span className="font-medium flex items-center gap-1.5">
+                <Avatar name={memberName(t.from)} size={20} />
+                {memberName(t.from)}
+              </span>
               <ArrowRight size={13} className="opacity-50" />
-              <span className="font-medium">{memberName(t.to)}</span>
+              <span className="font-medium flex items-center gap-1.5">
+                <Avatar name={memberName(t.to)} size={20} />
+                {memberName(t.to)}
+              </span>
               <span className="ml-auto font-mono font-semibold text-rust">{fmt(t.amount)}</span>
             </motion.button>
           ))}
@@ -372,7 +401,10 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         <div className="flex flex-wrap gap-1.5">
           {members.map((m) => (
             <motion.button key={m.id} whileTap={{ scale: 0.94 }} onClick={() => setFrom(m.id)} className={pillClass(from === m.id)}>
-              {m.name}
+              <span className="inline-flex items-center gap-1.5">
+                <Avatar name={m.name} size={16} />
+                {m.name}
+              </span>
             </motion.button>
           ))}
         </div>
@@ -382,7 +414,10 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         <div className="flex flex-wrap gap-1.5">
           {members.map((m) => (
             <motion.button key={m.id} whileTap={{ scale: 0.94 }} onClick={() => setTo(m.id)} className={pillClass(to === m.id)}>
-              {m.name}
+              <span className="inline-flex items-center gap-1.5">
+                <Avatar name={m.name} size={16} />
+                {m.name}
+              </span>
             </motion.button>
           ))}
         </div>
@@ -396,7 +431,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
         whileTap={canSubmit ? { scale: 0.97 } : {}}
         disabled={!canSubmit}
         onClick={() => onSettle({ from, to, amount: numAmount })}
-        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none bg-charcoal text-paper cursor-pointer mt-1 flex items-center justify-center gap-1.5 disabled:opacity-40"
+        className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer mt-1 flex items-center justify-center gap-1.5 disabled:opacity-40"
       >
         <Check size={15} />
         Mark as paid

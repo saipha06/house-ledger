@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, Check } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
+import Avatar from "./Avatar";
 
 const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
@@ -50,7 +51,7 @@ export default function Groceries({ items, members, me, refresh }) {
           whileTap={text.trim() ? { scale: 0.9 } : {}}
           disabled={!text.trim() || busy}
           onClick={add}
-          className="w-[46px] shrink-0 rounded-lg bg-charcoal text-paper flex items-center justify-center disabled:opacity-40"
+          className="w-[46px] shrink-0 rounded-lg btn-gradient flex items-center justify-center disabled:opacity-40"
         >
           <Plus size={18} />
         </motion.button>
@@ -100,8 +101,10 @@ function GroceryRow({ item, memberName, onToggle, onDelete }) {
       <motion.button
         whileTap={{ scale: 0.85 }}
         onClick={onToggle}
-        className={`w-[22px] h-[22px] shrink-0 rounded-md flex items-center justify-center text-paper-2 ${
-          item.checked ? "bg-sage border-none" : "bg-transparent border-[1.5px] border-charcoal/30"
+        className={`w-[22px] h-[22px] shrink-0 rounded-md flex items-center justify-center text-white ${
+          item.checked
+            ? "bg-gradient-to-br from-lime-400 to-lime-600 border-none shadow-[0_0_12px_-2px_rgba(155,197,61,0.7)]"
+            : "bg-transparent border-[1.5px] border-charcoal/30"
         }`}
       >
         <AnimatePresence>
@@ -114,7 +117,10 @@ function GroceryRow({ item, memberName, onToggle, onDelete }) {
       </motion.button>
       <div className="flex-1 min-w-0">
         <div className={`text-[13.5px] font-medium ${item.checked ? "line-through" : ""}`}>{item.name}</div>
-        <div className="text-[11.5px] opacity-55 mt-0.5">added by {memberName(item.added_by)}</div>
+        <div className="flex items-center gap-1.5 text-[11.5px] opacity-55 mt-1">
+          <Avatar name={memberName(item.added_by)} size={14} />
+          added by {memberName(item.added_by)}
+        </div>
       </div>
       <motion.button whileTap={{ scale: 0.85 }} onClick={onDelete} title="Remove" className="bg-transparent border-none text-rust/60 cursor-pointer p-2">
         <X size={14} />

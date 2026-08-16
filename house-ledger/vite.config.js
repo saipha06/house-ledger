@@ -14,8 +14,8 @@ export default defineConfig({
         name: "Casa",
         short_name: "Casa",
         description: "Shared household app for expenses, groceries, and game night",
-        theme_color: "#12201C",
-        background_color: "#12201C",
+        theme_color: "#100c08",
+        background_color: "#100c08",
         display: "standalone",
         start_url: "/",
         icons: [
