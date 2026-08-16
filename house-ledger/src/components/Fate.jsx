@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, Shuffle } from "lucide-react";
 import SectionLabel from "./SectionLabel";
+import Wheel from "./Wheel";
 
 const PALETTE = ["#F0B429", "#E2572E", "#9BC53D", "#C2703D", "#D4A017", "#8B5A2B", "#F2994A", "#B8461F"];
 const STORAGE_KEY = "casa-fate-options";
@@ -44,11 +45,6 @@ export default function Fate({ onCelebrate }) {
       return seg;
     });
   }, [options, total]);
-
-  const gradient =
-    segments.length > 0
-      ? `conic-gradient(${segments.map((s) => `${s.color} ${s.start}deg ${s.start + s.angle}deg`).join(", ")})`
-      : "#F5ECD9";
 
   const addOption = () => {
     const n = text.trim();
@@ -98,25 +94,7 @@ export default function Fate({ onCelebrate }) {
           Add at least two options below — what's for dinner, who does the dishes, where to go this weekend — and spin to let fate decide.
         </div>
       ) : (
-        <div className="relative w-[220px] h-[220px] mx-auto mt-2 mb-[18px]">
-          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[16px] border-t-charcoal" />
-          <motion.div
-            animate={{ rotate: rotation }}
-            transition={spinning ? { duration: 4.2, ease: [0.15, 0.65, 0.1, 1] } : { duration: 0 }}
-            style={{ background: gradient }}
-            className="w-full h-full rounded-full border-4 border-white/20 shadow-[0_0_50px_-10px_rgba(240,176,41,0.5)]"
-          />
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={spin}
-            disabled={spinning || segments.length < 2}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] rounded-full bg-paper border-[3px] border-charcoal flex items-center justify-center text-charcoal z-30"
-          >
-            <motion.span animate={spinning ? { rotate: 360 } : {}} transition={spinning ? { duration: 0.8, repeat: Infinity, ease: "linear" } : {}}>
-              <Shuffle size={20} />
-            </motion.span>
-          </motion.button>
-        </div>
+        <Wheel segments={segments} rotation={rotation} spinning={spinning} onSpin={spin} Icon={Shuffle} />
       )}
 
       <AnimatePresence>
@@ -138,7 +116,7 @@ export default function Fate({ onCelebrate }) {
           <SectionLabel n={String(options.length).padStart(2, "0")} title="Options" />
           <div className="flex flex-col gap-2 mb-4">
             <AnimatePresence initial={false}>
-              {options.map((opt) => (
+              {options.map((opt, i) => (
                 <motion.div
                   key={opt.id}
                   layout
@@ -147,6 +125,7 @@ export default function Fate({ onCelebrate }) {
                   exit={{ opacity: 0, x: 20 }}
                   className="flex items-center gap-2 px-3 py-2.5 bg-paper-2 rounded-lg text-[13px]"
                 >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PALETTE[i % PALETTE.length] }} />
                   <span className="flex-1">{opt.name}</span>
                   <motion.button
                     whileTap={{ scale: 0.85 }}
