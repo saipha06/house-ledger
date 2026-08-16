@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
 
 const PALETTE = ["#F0B429", "#E2572E", "#9BC53D", "#C2703D", "#D4A017", "#8B5A2B", "#F2994A", "#B8461F"];
-const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
 export default function Games({ games, refresh, onCelebrate }) {
   const [name, setName] = useState("");

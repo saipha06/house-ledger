@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
 import Avatar from "./Avatar";
 
-const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
 export default function Groceries({ items, members, me, refresh }) {
   const [text, setText] = useState("");

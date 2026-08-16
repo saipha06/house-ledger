@@ -18,7 +18,7 @@ const pillClass = (active) =>
   `px-3.5 py-2 text-[13px] font-medium rounded-full border cursor-pointer ${
     active ? "btn-gradient border-transparent" : "bg-paper-2 border-charcoal/20 text-charcoal"
   }`;
-const inputClass = "w-full px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
 
 export default function Money({ members, expenses, settlements, refresh, onCelebrate }) {
   const [view, setView] = useState("balances");
@@ -272,11 +272,11 @@ function AddExpenseView({ members, onAdd, busy }) {
       <SectionLabel n="+" title="New entry" />
       <div className="mb-4">
         <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5">What was it for</label>
-        <input className={inputClass} placeholder="e.g. Costco groceries" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <input className={`${inputClass} w-full`} placeholder="e.g. Costco groceries" value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="mb-4">
         <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5">Amount</label>
-        <input className={inputClass} placeholder="0.00" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+        <input className={`${inputClass} w-full`} placeholder="0.00" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
       </div>
       <div className="mb-4">
         <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5">Paid by</label>
@@ -424,7 +424,7 @@ function SettleView({ members, simplified, memberName, onSettle, busy }) {
       </div>
       <div className="mb-4">
         <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5">Amount</label>
-        <input className={inputClass} placeholder="0.00" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
+        <input className={`${inputClass} w-full`} placeholder="0.00" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} />
       </div>
 
       <motion.button
