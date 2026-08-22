@@ -29,8 +29,8 @@ export default function Onboarding({ session, onDone }) {
     <div className="relative h-dvh bg-ink flex items-center justify-center p-5 font-sans overflow-hidden">
       <BackgroundArt />
       <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ opacity: 0, y: 16, scale: 0.98, rotate: -2.5 }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotate: -1.5 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
       >

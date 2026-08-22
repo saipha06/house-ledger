@@ -89,7 +89,7 @@ function LoadingScreen() {
   return (
     <div className="relative h-dvh bg-ink flex items-center justify-center p-5 overflow-hidden">
       <BackgroundArt />
-      <div className="relative z-10 w-full max-w-[340px] bg-paper rounded-2xl p-6 shadow-2xl">
+      <div className="relative z-10 w-full max-w-[340px] -rotate-[1.5deg] bg-paper rounded-2xl p-6 shadow-2xl">
         <motion.div {...pulse} className="bg-charcoal/15 rounded h-2.5 w-2/5" />
         <motion.div {...pulse} className="bg-charcoal/15 rounded h-5 w-[70%] mt-2" />
         <div className="grid grid-cols-2 gap-2.5 mt-5">

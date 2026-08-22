@@ -40,7 +40,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
         <div className="flex justify-between items-end safe-top px-5 pb-3.5 text-cream shrink-0">
           <div className="flex items-center gap-3">
             <Avatar name={me.name} size={38} ring />
-            <div>
+            <div className="-rotate-[1.5deg]">
               <div className="font-display italic text-[14px] opacity-70 mb-0.5">{me.name}</div>
               <h1 className="font-display text-gradient text-[26px] font-semibold uppercase tracking-wide m-0">Casa</h1>
             </div>
@@ -62,7 +62,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
         </div>
 
         <div className="flex-1 px-3 pb-5">
-          <div className="relative bg-paper rounded-2xl p-[22px_18px] text-charcoal min-h-[420px] shadow-2xl">
+          <div className="relative -rotate-[1.5deg] bg-paper rounded-2xl p-[22px_18px] text-charcoal min-h-[420px] shadow-2xl">
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={section}
