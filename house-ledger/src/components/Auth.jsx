@@ -37,6 +37,7 @@ export default function Auth() {
           <Receipt size={24} strokeWidth={2} />
         </div>
         <h1 className="font-display text-gradient text-[28px] font-semibold uppercase tracking-wide m-0">Casa</h1>
+        <div className="text-[10.5px] uppercase tracking-[0.08em] text-charcoal/55 mt-1">household ledger &middot; no. 0407</div>
 
         <div className="flex gap-1.5 mt-4">
           {[
