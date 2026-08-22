@@ -62,25 +62,31 @@ export default function Auth() {
         </div>
 
         <form onSubmit={submit} className="mt-4">
-          <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5 mt-3">Email</label>
-          <input
-            type="email"
-            required
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-1 py-2.5 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40"
-          />
-          <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5 mt-3">Password</label>
-          <input
-            type="password"
-            required
-            minLength={6}
-            placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-1 py-2.5 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40"
-          />
+          <hr className="border-t border-dashed border-charcoal/25 mb-1" />
+          <div className="flex items-baseline gap-2 py-2.5 text-[13px]">
+            <label className="shrink-0 text-charcoal/55 tracking-wide">email</label>
+            <input
+              type="email"
+              required
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 min-w-0 text-right bg-transparent border-0 border-b border-dotted border-charcoal/40 text-[13px] text-charcoal placeholder:text-charcoal/40 py-0.5"
+            />
+          </div>
+          <div className="flex items-baseline gap-2 py-2.5 text-[13px]">
+            <label className="shrink-0 text-charcoal/55 tracking-wide">password</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              placeholder={mode === "signup" ? "at least 6 characters" : "········"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="flex-1 min-w-0 text-right bg-transparent border-0 border-b border-dotted border-charcoal/40 text-[13px] text-charcoal placeholder:text-charcoal/40 py-0.5"
+            />
+          </div>
+          <hr className="border-t border-dashed border-charcoal/25 mt-1" />
 
           <AnimatePresence>
             {error && (
@@ -95,15 +101,14 @@ export default function Auth() {
             )}
           </AnimatePresence>
 
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            disabled={loading}
-            className="w-full py-3.5 text-[15px] font-semibold rounded-xl border-none btn-gradient cursor-pointer mt-5 flex items-center justify-center gap-1.5 disabled:opacity-60"
-          >
+          <motion.button whileTap={{ scale: 0.96 }} disabled={loading} className="btn-stamp mx-auto mt-6">
             {mode === "signin" ? <LogIn size={15} /> : <UserPlus size={15} />}
             {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
           </motion.button>
         </form>
+
+        <div className="ticket-barcode mt-6" />
+        <p className="text-center text-[10px] uppercase tracking-[0.05em] text-charcoal/45 mt-3">thank you for splitting fairly</p>
 
         {mode === "signup" && (
           <p className="text-[11.5px] opacity-55 mt-3 leading-relaxed">
