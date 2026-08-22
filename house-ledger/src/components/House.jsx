@@ -25,7 +25,7 @@ export default function House({ members, onSave, busy }) {
             <input
               value={m.name}
               onChange={(e) => update(m.id, e.target.value)}
-              className="flex-1 px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
+              className="flex-1 px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal"
             />
           </motion.div>
         ))}

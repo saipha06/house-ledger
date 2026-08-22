@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import SectionLabel from "./SectionLabel";
 import Avatar from "./Avatar";
 
-const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40";
 
 export default function Groceries({ items, members, me, refresh }) {
   const [text, setText] = useState("");
@@ -123,10 +123,8 @@ function GroceryRow({ item, memberName, onToggle, onDelete }) {
       <motion.button
         whileTap={{ scale: 0.85 }}
         onClick={onToggle}
-        className={`w-[22px] h-[22px] shrink-0 rounded-md flex items-center justify-center text-white ${
-          item.checked
-            ? "bg-gradient-to-br from-lime-400 to-lime-600 border-none shadow-[0_0_12px_-2px_rgba(155,197,61,0.7)]"
-            : "bg-transparent border-[1.5px] border-charcoal/30"
+        className={`w-[22px] h-[22px] shrink-0 rounded-full flex items-center justify-center text-paper ${
+          item.checked ? "bg-[#5c7a45] border-none" : "bg-transparent border-[1.5px] border-charcoal/30"
         }`}
       >
         <AnimatePresence>
@@ -144,7 +142,12 @@ function GroceryRow({ item, memberName, onToggle, onDelete }) {
           added by {memberName(item.added_by)}
         </div>
       </div>
-      <motion.button whileTap={{ scale: 0.85 }} onClick={onDelete} title="Remove" className="bg-transparent border-none text-rust/60 cursor-pointer p-2">
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={onDelete}
+        title="Remove"
+        className="bg-transparent border-none text-rust/60 cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
+      >
         <X size={14} />
       </motion.button>
     </motion.div>

@@ -18,7 +18,7 @@ const pillClass = (active) =>
   `px-3.5 py-2 text-[13px] font-medium rounded-full border cursor-pointer ${
     active ? "btn-gradient border-transparent" : "bg-paper-2 border-charcoal/20 text-charcoal"
   }`;
-const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40";
 
 export default function Money({ members, expenses, settlements, refresh, onCelebrate }) {
   const [view, setView] = useState("balances");
@@ -73,7 +73,7 @@ export default function Money({ members, expenses, settlements, refresh, onCeleb
               whileTap={{ scale: 0.94 }}
               onClick={() => setView(key)}
               className={`relative px-3.5 py-1.5 text-[12.5px] font-semibold rounded-full border whitespace-nowrap flex items-center ${
-                active ? "text-white border-transparent" : "text-charcoal border-charcoal/20"
+                active ? "text-brass border-transparent" : "text-charcoal border-charcoal/20"
               }`}
             >
               {active && (
@@ -127,10 +127,10 @@ function BalancesView({ balances, members, simplified, memberName }) {
           const color = positive ? "text-sage" : negative ? "text-rust" : "text-charcoal/80";
           const glow = positive ? "glow-sage" : negative ? "glow-rust" : "";
           const ring = positive
-            ? "border-lime-400/25 shadow-[0_0_24px_-8px_rgba(155,197,61,0.35)]"
+            ? "border-[#5c7a45]/35"
             : negative
-              ? "border-orange-500/25 shadow-[0_0_24px_-8px_rgba(226,87,46,0.35)]"
-              : "border-white/10";
+              ? "border-[#8f3420]/35"
+              : "border-charcoal/10";
           return (
             <motion.div
               key={m.id}
@@ -222,7 +222,7 @@ function HistoryView({ expenses, memberName, onDelete, busy }) {
                 disabled={busy}
                 onClick={() => onDelete(exp.id)}
                 title="Delete entry"
-                className="bg-transparent border-none text-rust/60 cursor-pointer p-2"
+                className="bg-transparent border-none text-rust/60 cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
               >
                 <X size={14} />
               </motion.button>

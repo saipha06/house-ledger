@@ -42,7 +42,7 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
             <Avatar name={me.name} size={38} ring />
             <div>
               <div className="font-display italic text-[14px] opacity-70 mb-0.5">{me.name}</div>
-              <h1 className="font-display text-gradient text-[26px] font-semibold m-0 tracking-tight">Casa</h1>
+              <h1 className="font-display text-gradient text-[26px] font-semibold uppercase tracking-wide m-0">Casa</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">

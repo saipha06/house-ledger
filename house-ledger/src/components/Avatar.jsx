@@ -1,11 +1,5 @@
-const GRADIENTS = [
-  ["#f0b429", "#e2572e"],
-  ["#e2572e", "#c2703d"],
-  ["#9bc53d", "#f0b429"],
-  ["#c2703d", "#8b5a2b"],
-  ["#f5b942", "#b8461f"],
-  ["#d4a017", "#9bc53d"],
-];
+// Flat inks, not glossy gradients -- each housemate gets a stamp color.
+const INKS = ["#c1452e", "#35507a", "#5c7a45", "#b8862c", "#7a3f5c", "#2f7a72"];
 
 function hashStr(str) {
   let h = 0;
@@ -21,18 +15,18 @@ function initials(name) {
 }
 
 export default function Avatar({ name = "?", size = 32, ring = false, className = "" }) {
-  const [from, to] = GRADIENTS[hashStr(name) % GRADIENTS.length];
+  const ink = INKS[hashStr(name) % INKS.length];
   return (
     <span
-      className={`inline-flex items-center justify-center shrink-0 rounded-full font-semibold text-white leading-none ${
-        ring ? "ring-2 ring-white/15" : ""
+      className={`inline-flex items-center justify-center shrink-0 rounded-full font-semibold text-paper leading-none ${
+        ring ? "ring-2 ring-paper/40" : ""
       } ${className}`}
       style={{
         width: size,
         height: size,
         fontSize: Math.max(9, size * 0.38),
-        background: `linear-gradient(135deg, ${from}, ${to})`,
-        boxShadow: `0 3px 12px -3px ${from}80`,
+        background: ink,
+        boxShadow: "0 2px 5px -1px rgba(38, 34, 29, 0.4)",
       }}
     >
       {initials(name)}

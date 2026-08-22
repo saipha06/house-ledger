@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabaseClient";
-import { LogIn, UserPlus, Home } from "lucide-react";
+import { LogIn, UserPlus, Receipt } from "lucide-react";
 import SignInArt from "./SignInArt";
 
 export default function Auth() {
@@ -33,16 +33,10 @@ export default function Auth() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
       >
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 text-white"
-          style={{
-            background: "linear-gradient(135deg, #f0b429, #e2572e)",
-            boxShadow: "0 10px 30px -8px rgba(240, 176, 41, 0.6)",
-          }}
-        >
-          <Home size={26} strokeWidth={2} />
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-brass border-2 border-brass -rotate-3">
+          <Receipt size={24} strokeWidth={2} />
         </div>
-        <h1 className="font-display text-gradient text-[28px] font-semibold m-0">Casa</h1>
+        <h1 className="font-display text-gradient text-[28px] font-semibold uppercase tracking-wide m-0">Casa</h1>
 
         <div className="flex gap-1.5 mt-4">
           {[
@@ -74,7 +68,7 @@ export default function Auth() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
+            className="w-full px-1 py-2.5 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40"
           />
           <label className="block text-[11.5px] font-semibold uppercase tracking-wide opacity-55 mb-1.5 mt-3">Password</label>
           <input
@@ -84,7 +78,7 @@ export default function Auth() {
             placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
+            className="w-full px-1 py-2.5 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40"
           />
 
           <AnimatePresence>

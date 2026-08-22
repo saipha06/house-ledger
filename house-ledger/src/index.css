@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Oswald", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Courier Prime", ui-monospace, "SF Mono", monospace;
+  --font-mono: "Courier Prime", ui-monospace, "SF Mono", monospace;
 
-  --color-ink: #100c08;
-  --color-ink-deep: #0a0703;
-  --color-cream: #f5ecd9;
-  --color-paper: rgba(255, 244, 224, 0.055);
-  --color-paper-2: rgba(255, 244, 224, 0.08);
-  --color-charcoal: #f5ecd9;
-  --color-brass: #f0b429;
-  --color-sage: #9bc53d;
-  --color-rust: #e2572e;
+  --color-ink: #3c3934;
+  --color-ink-deep: rgba(26, 24, 20, 0.94);
+  --color-cream: #f3ede2;
+  --color-paper: #f7f4ec;
+  --color-paper-2: #f0dcd6;
+  --color-charcoal: #26221d;
+  --color-brass: #c1452e;
+  --color-sage: #5c7a45;
+  --color-rust: #8f3420;
 
-  --color-gold: #f5d18a;
-  --color-copper: #c2703d;
+  --color-gold: #d1654a;
+  --color-copper: #8a8377;
 }
 
 @layer base {
@@ -47,42 +47,97 @@
   a {
     touch-action: manipulation;
   }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
   input,
   textarea,
   select {
     font-size: 16px; /* prevents iOS auto-zoom on focus */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   }
   :focus-visible {
     outline: 2px solid var(--color-brass);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 2px;
+  }
+  /* Thin, stamp-red scrollbars instead of bulky OS defaults, for the
+     main scroll container and any horizontal tab strips. */
+  #root,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(193, 69, 46, 0.35) transparent;
+  }
+  #root::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  #root::-webkit-scrollbar-track,
+  .overflow-x-auto::-webkit-scrollbar-track,
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #root::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb,
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(193, 69, 46, 0.3);
+    border-radius: 999px;
+  }
+  #root::-webkit-scrollbar-thumb:hover,
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover,
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(193, 69, 46, 0.5);
   }
 
-  /* Gradient-mesh page background wherever bg-ink is used */
+  /* Flat desk surface wherever bg-ink is used -- a matte tabletop, not a
+     glowing gradient mesh; paper and ink don't glow. */
   .bg-ink {
     background-color: var(--color-ink);
-    background-image: radial-gradient(60% 46% at 12% -4%, rgba(240, 176, 41, 0.3), transparent 60%),
-      radial-gradient(50% 40% at 104% 8%, rgba(226, 87, 46, 0.2), transparent 60%),
-      radial-gradient(60% 46% at 46% 112%, rgba(155, 197, 61, 0.14), transparent 60%);
+    background-image: radial-gradient(120% 90% at 50% 0%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.22) 100%);
     background-attachment: fixed;
   }
   .bg-ink-deep {
-    background-color: rgba(10, 7, 3, 0.72);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background-color: var(--color-ink-deep);
   }
 
-  /* Glass surfaces */
+  /* Paper surfaces -- opaque, matte, no glass blur. .bg-paper is the
+     "ticket": a physical sheet resting on the desk, with a perforated
+     top/bottom edge punched through it. .bg-paper-2 is the carbon-copy
+     duplicate underneath: a duller, pink-tinted second sheet used for
+     input fields, list rows and inactive pills. */
   .bg-paper {
+    position: relative;
     background-color: var(--color-paper);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(255, 244, 224, 0.12);
-    box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 244, 224, 0.07);
+    border: 1px solid rgba(38, 34, 29, 0.12);
+    box-shadow: 0 22px 50px -22px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(0, 0, 0, 0.05);
+  }
+  .bg-paper::before,
+  .bg-paper::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 11px;
+    background-image: radial-gradient(circle at 10px 5.5px, var(--color-ink) 5.5px, transparent 6px);
+    background-size: 20px 11px;
+    background-repeat: repeat-x;
+    pointer-events: none;
+  }
+  .bg-paper::before {
+    top: -5px;
+  }
+  .bg-paper::after {
+    bottom: -5px;
   }
   .bg-paper-2 {
     background-color: var(--color-paper-2);
-    border: 1px solid rgba(255, 244, 224, 0.08);
+    border: 1px solid rgba(38, 34, 29, 0.1);
   }
 }
 
@@ -94,48 +149,76 @@
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
   }
 
+  /* Flat stamp-red wordmark with a faint double-strike offset, like a
+     slightly misregistered print run -- not a glossy gradient. */
   .text-gradient {
-    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-brass) 55%, var(--color-rust) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--color-brass);
+    text-shadow: 0.5px 0.5px 0 rgba(38, 34, 29, 0.18);
   }
 
+  /* Soft ink shadows instead of colored neon glow -- matte paper doesn't
+     glow, it just sits slightly proud of the page. */
   .glow-brass {
-    filter: drop-shadow(0 0 14px rgba(240, 176, 41, 0.5));
+    filter: drop-shadow(0 1px 1px rgba(38, 34, 29, 0.3));
   }
   .glow-sage {
-    filter: drop-shadow(0 0 12px rgba(155, 197, 61, 0.4));
+    filter: drop-shadow(0 1px 1px rgba(38, 34, 29, 0.25));
   }
   .glow-rust {
-    filter: drop-shadow(0 0 12px rgba(226, 87, 46, 0.45));
+    filter: drop-shadow(0 1px 1px rgba(38, 34, 29, 0.25));
   }
 
+  /* Ink-stamp button: an outlined stamp on paper, not a filled gradient
+     pill. !important on the border pins it against the border-none /
+     border-transparent utilities several buttons still carry from the
+     old fill-button design -- without it, Tailwind's own utility classes
+     (same cascade layer) can win the border back unpredictably. */
   .btn-gradient {
     position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--color-brass), var(--color-rust));
-    color: #ffffff;
-    box-shadow: 0 10px 30px -10px rgba(240, 176, 41, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transition: filter 0.2s ease, box-shadow 0.25s ease;
-  }
-  .btn-gradient::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 45%, transparent 60%);
-    transform: translateX(-130%);
-    transition: transform 0.6s ease;
-  }
-  .btn-gradient:hover::before {
-    transform: translateX(130%);
+    background-color: transparent;
+    color: var(--color-brass);
+    border-width: 2px !important;
+    border-style: solid !important;
+    border-color: var(--color-brass) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    transform: rotate(-0.4deg);
+    box-shadow: none;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
   }
   .btn-gradient:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 12px 36px -8px rgba(226, 87, 46, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background-color: var(--color-brass);
+    color: var(--color-paper);
+  }
+  .btn-gradient:active {
+    transform: rotate(-0.4deg) scale(0.97);
   }
   .btn-gradient:disabled {
-    filter: grayscale(0.5) brightness(0.65);
-    box-shadow: none;
+    opacity: 0.45;
+    border-color: rgba(38, 34, 29, 0.3) !important;
+    color: rgba(38, 34, 29, 0.45);
+    background-color: transparent;
+  }
+
+  /* Underline instead of a hard outline on text fields, to match the
+     receipt-line look used everywhere else in the app. */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--color-brass) !important;
+  }
+
+  /* Ink-tinted lift on hover for bordered ghost/pill buttons and links
+     (delivery-service links, tab pills, mode toggles, etc.) */
+  a[class*="border-charcoal"],
+  button[class*="border-charcoal"] {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  a[class*="border-charcoal"]:hover,
+  button[class*="border-charcoal"]:not(:disabled):hover {
+    border-color: var(--color-brass);
+    background-color: rgba(193, 69, 46, 0.07);
   }
 }

@@ -4,9 +4,9 @@ import { Plus, X, Shuffle } from "lucide-react";
 import SectionLabel from "./SectionLabel";
 import Wheel from "./Wheel";
 
-const PALETTE = ["#F0B429", "#E2572E", "#9BC53D", "#C2703D", "#D4A017", "#8B5A2B", "#F2994A", "#B8461F"];
+const PALETTE = ["#C1452E", "#35507A", "#5C7A45", "#B8862C", "#7A3F5C", "#2F7A72", "#8F3420", "#4A5A3A"];
 const STORAGE_KEY = "casa-fate-options";
-const inputClass = "px-3 py-3 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal";
+const inputClass = "px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40";
 
 function loadOptions() {
   try {
@@ -131,7 +131,7 @@ export default function Fate({ onCelebrate }) {
                     whileTap={{ scale: 0.85 }}
                     onClick={() => removeOption(opt.id)}
                     title="Remove"
-                    className="bg-transparent border-none text-rust/60 cursor-pointer p-1"
+                    className="bg-transparent border-none text-rust/60 cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
                   >
                     <X size={14} />
                   </motion.button>

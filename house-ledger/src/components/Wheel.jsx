@@ -41,7 +41,7 @@ export default function Wheel({ segments, rotation, spinning, onSpin, size = 220
                 const [x2, y2] = polarToXY(cx, cy, sliceR, s.start + s.angle);
                 const largeArc = s.angle > 180 ? 1 : 0;
                 const d = `M ${cx} ${cy} L ${x1} ${y1} A ${sliceR} ${sliceR} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                return <path key={s.id ?? s.name} d={d} fill={s.color} stroke="rgba(16,12,8,0.45)" strokeWidth="1" />;
+                return <path key={s.id ?? s.name} d={d} fill={s.color} stroke="rgba(247,244,236,0.5)" strokeWidth="1" />;
               })
             )}
             {segments.length > 1 &&
@@ -54,7 +54,7 @@ export default function Wheel({ segments, rotation, spinning, onSpin, size = 220
                     key={`${s.id ?? s.name}-label`}
                     x={lx}
                     y={ly}
-                    fill="#100c08"
+                    fill="#f7f4ec"
                     fontSize="10.5"
                     fontWeight="700"
                     textAnchor="middle"

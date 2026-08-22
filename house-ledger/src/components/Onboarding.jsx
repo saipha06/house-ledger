@@ -46,7 +46,7 @@ export default function Onboarding({ session, onDone }) {
             placeholder="e.g. Phani"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 text-[15px] border border-charcoal/20 rounded-lg bg-paper-2 text-charcoal"
+            className="w-full px-1 py-2.5 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40 text-center"
           />
           <AnimatePresence>
             {error && (
