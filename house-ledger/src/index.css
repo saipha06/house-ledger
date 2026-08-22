@@ -201,40 +201,6 @@
     background-color: transparent;
   }
 
-  /* Ink-stamp seal button: an oval rubber-stamp shape for the ticket's
-     hero action (sign-in), distinct from the rectangular .btn-gradient
-     used for everyday CTAs elsewhere in the app. */
-  .btn-stamp {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 13px 34px;
-    border-radius: 50% / 42%;
-    border: 2.5px solid var(--color-brass);
-    background-color: transparent;
-    color: var(--color-brass);
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transform: rotate(-3deg);
-    transition: background-color 0.15s ease, color 0.15s ease;
-  }
-  .btn-stamp:hover {
-    background-color: var(--color-brass);
-    color: var(--color-paper);
-  }
-  .btn-stamp:active {
-    transform: rotate(-3deg) scale(0.96);
-  }
-  .btn-stamp:disabled {
-    opacity: 0.45;
-    border-color: rgba(38, 34, 29, 0.3);
-    color: rgba(38, 34, 29, 0.45);
-  }
-
   /* Decorative barcode strip for the bottom of a ticket. */
   .ticket-barcode {
     height: 24px;

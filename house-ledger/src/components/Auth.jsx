@@ -28,8 +28,8 @@ export default function Auth() {
     <div className="relative h-dvh bg-ink flex items-center justify-center p-5 font-sans overflow-hidden">
       <SignInArt />
       <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ opacity: 0, y: 16, scale: 0.98, rotate: -2.5 }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotate: -1.5 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 w-full max-w-[360px] bg-paper rounded-2xl p-7 text-charcoal shadow-2xl"
       >
@@ -39,30 +39,37 @@ export default function Auth() {
         <h1 className="font-display text-gradient text-[28px] font-semibold uppercase tracking-wide m-0">Casa</h1>
         <div className="text-[10.5px] uppercase tracking-[0.08em] text-charcoal/55 mt-1">household ledger &middot; no. 0407</div>
 
-        <div className="flex gap-1.5 mt-4">
-          {[
-            ["signin", "Sign in"],
-            ["signup", "Create account"],
-          ].map(([key, label]) => (
-            <motion.button
-              key={key}
-              type="button"
-              whileTap={{ scale: 0.96 }}
-              onClick={() => {
-                setMode(key);
-                setError("");
-              }}
-              className={`flex-1 py-2 text-[13px] font-semibold rounded-full border transition-colors ${
-                mode === key ? "btn-gradient border-transparent" : "bg-transparent border-charcoal/20 text-charcoal"
-              }`}
-            >
-              {label}
-            </motion.button>
-          ))}
-        </div>
+        <form onSubmit={submit} className="mt-5">
+          <div className="flex gap-1.5">
+            {[
+              ["signin", "Sign in", LogIn],
+              ["signup", "New here", UserPlus],
+            ].map(([key, label, Icon]) => {
+              const active = mode === key;
+              return (
+                <motion.button
+                  key={key}
+                  type={active ? "submit" : "button"}
+                  whileTap={{ scale: 0.96 }}
+                  disabled={active && loading}
+                  onClick={() => {
+                    if (!active) {
+                      setMode(key);
+                      setError("");
+                    }
+                  }}
+                  className={`flex-1 py-2.5 text-[13px] font-semibold uppercase tracking-wide rounded-full border flex items-center justify-center gap-1.5 transition-colors ${
+                    active ? "btn-gradient border-transparent" : "bg-transparent border-charcoal/20 text-charcoal"
+                  }`}
+                >
+                  {active && <Icon size={13} />}
+                  {active && loading ? "Working…" : label}
+                </motion.button>
+              );
+            })}
+          </div>
 
-        <form onSubmit={submit} className="mt-4">
-          <hr className="border-t border-dashed border-charcoal/25 mb-1" />
+          <hr className="border-t border-dashed border-charcoal/25 mt-4 mb-1" />
           <div className="flex items-baseline gap-2 py-2.5 text-[13px]">
             <label className="shrink-0 text-charcoal/55 tracking-wide">email</label>
             <input
@@ -100,14 +107,9 @@ export default function Auth() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          <motion.button whileTap={{ scale: 0.96 }} disabled={loading} className="btn-stamp mx-auto mt-6">
-            {mode === "signin" ? <LogIn size={15} /> : <UserPlus size={15} />}
-            {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
-          </motion.button>
         </form>
 
-        <div className="ticket-barcode mt-6" />
+        <div className="ticket-barcode mt-8" />
         <p className="text-center text-[10px] uppercase tracking-[0.05em] text-charcoal/45 mt-3">thank you for splitting fairly</p>
 
         {mode === "signup" && (
