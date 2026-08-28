@@ -52,7 +52,7 @@ export default function Games({ games, refresh, onCelebrate }) {
     if (segments.length < 2 || spinning) return;
     setWinner(null);
     setSpinning(true);
-    const r = Math.random() * total;
+    const r = Math.random() * 360;
     let acc = 0;
     let selected = segments[0];
     for (const seg of segments) {
