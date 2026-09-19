@@ -279,8 +279,8 @@ function SubtaskRow({ subtask, options, refresh }) {
     await refresh();
   };
 
-  const addOption = async (vendorName, quote) => {
-    await supabase.from("wedding_vendor_options").insert({ subtask_id: subtask.id, vendor_name: vendorName, quote_amount: quote });
+  const addOption = async (vendorName, quote, link, notes) => {
+    await supabase.from("wedding_vendor_options").insert({ subtask_id: subtask.id, vendor_name: vendorName, quote_amount: quote, link: link || null, notes: notes || null });
     await refresh();
   };
 
@@ -355,7 +355,23 @@ function SubtaskRow({ subtask, options, refresh }) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold">{o.vendor_name}</div>
-                    {(o.link || o.notes) && <div className="text-[10.5px] opacity-55 truncate">{[o.link, o.notes].filter(Boolean).join(" · ")}</div>}
+                    {(o.link || o.notes) && (
+                      <div className="text-[10.5px] opacity-55 truncate">
+                        {o.link && (
+                          <a
+                            href={/^https?:\/\//.test(o.link) ? o.link : `https://${o.link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="underline"
+                          >
+                            {o.link}
+                          </a>
+                        )}
+                        {o.link && o.notes ? " · " : ""}
+                        {o.notes}
+                      </div>
+                    )}
                   </div>
                   <span className="font-mono font-semibold w-16 text-right shrink-0">{fmt(Number(o.quote_amount) || 0)}</span>
                   {o.approved ? (
@@ -415,33 +431,55 @@ function AddRow({ placeholder, onAdd, small }) {
 function AddOptionRow({ onAdd }) {
   const [name, setName] = useState("");
   const [quote, setQuote] = useState("");
+  const [link, setLink] = useState("");
+  const [notes, setNotes] = useState("");
   const submit = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    onAdd(trimmed, parseFloat(quote) || null);
+    onAdd(trimmed, parseFloat(quote) || null, link.trim(), notes.trim());
     setName("");
     setQuote("");
+    setLink("");
+    setNotes("");
   };
   return (
-    <div className="flex gap-1.5">
-      <input
-        className={`${inputClass} flex-1 min-w-0 py-2 text-[13px]`}
-        placeholder="Vendor name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-      />
-      <input
-        className={`${inputClass} w-16 py-2 text-[13px]`}
-        placeholder="Quote"
-        inputMode="decimal"
-        value={quote}
-        onChange={(e) => setQuote(e.target.value.replace(/[^0-9.]/g, ""))}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-      />
-      <motion.button whileTap={name.trim() ? { scale: 0.9 } : {}} disabled={!name.trim()} onClick={submit} className="w-9 h-9 shrink-0 rounded-lg btn-gradient flex items-center justify-center disabled:opacity-40">
-        <Plus size={15} />
-      </motion.button>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex gap-1.5">
+        <input
+          className={`${inputClass} flex-1 min-w-0 py-2 text-[13px]`}
+          placeholder="Vendor name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+        <input
+          className={`${inputClass} w-16 py-2 text-[13px]`}
+          placeholder="Quote"
+          inputMode="decimal"
+          value={quote}
+          onChange={(e) => setQuote(e.target.value.replace(/[^0-9.]/g, ""))}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+        <motion.button whileTap={name.trim() ? { scale: 0.9 } : {}} disabled={!name.trim()} onClick={submit} className="w-9 h-9 shrink-0 rounded-lg btn-gradient flex items-center justify-center disabled:opacity-40">
+          <Plus size={15} />
+        </motion.button>
+      </div>
+      <div className="flex gap-1.5">
+        <input
+          className={`${inputClass} flex-1 min-w-0 py-1.5 text-[12px]`}
+          placeholder="Link (optional)"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+        <input
+          className={`${inputClass} flex-1 min-w-0 py-1.5 text-[12px]`}
+          placeholder="Comments (optional)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+        />
+      </div>
     </div>
   );
 }
