@@ -231,9 +231,15 @@ function TaskCard({ task, subtasks, vendorOptions, subtotal, refresh }) {
     setOpen(true);
   };
 
+  const deleteTask = async (e) => {
+    e.stopPropagation();
+    await supabase.from("wedding_tasks").delete().eq("id", task.id);
+    await refresh();
+  };
+
   return (
     <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-paper-2 border border-charcoal/10 rounded-lg overflow-hidden">
-      <motion.button whileTap={{ scale: 0.99 }} onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2 px-3.5 py-3 bg-transparent border-none cursor-pointer text-left">
+      <div onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2 pl-3.5 pr-1.5 py-3 cursor-pointer">
         <motion.span animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.15 }} className="opacity-50 shrink-0">
           <ChevronRight size={14} />
         </motion.span>
@@ -242,7 +248,10 @@ function TaskCard({ task, subtasks, vendorOptions, subtotal, refresh }) {
           {subtasks.length} item{subtasks.length === 1 ? "" : "s"}
         </span>
         <span className="font-mono font-semibold text-[13.5px]">{fmt(subtotal)}</span>
-      </motion.button>
+        <motion.button whileTap={{ scale: 0.85 }} onClick={deleteTask} title="Remove task" className="bg-transparent border-none text-rust/60 cursor-pointer p-1.5 shrink-0">
+          <X size={14} />
+        </motion.button>
+      </div>
 
       {open && (
         <div className="px-2.5 pb-2.5">
@@ -292,6 +301,12 @@ function SubtaskRow({ subtask, options, refresh }) {
     await refresh();
   };
 
+  const deleteSubtask = async (e) => {
+    e.stopPropagation();
+    await supabase.from("wedding_subtasks").delete().eq("id", subtask.id);
+    await refresh();
+  };
+
   return (
     <div className="bg-[#f7f4ec] rounded-md border border-charcoal/8">
       <div className="flex items-center gap-2 px-2.5 py-2.5 cursor-pointer" onClick={() => setOpen((v) => !v)}>
@@ -319,6 +334,9 @@ function SubtaskRow({ subtask, options, refresh }) {
         ) : subtask.done ? (
           <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-charcoal/6 text-charcoal/45 shrink-0">no cost</span>
         ) : null}
+        <motion.button whileTap={{ scale: 0.85 }} onClick={deleteSubtask} title="Remove subtask" className="bg-transparent border-none text-rust/60 cursor-pointer p-1 shrink-0">
+          <X size={13} />
+        </motion.button>
       </div>
 
       {open && (
