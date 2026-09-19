@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, ShoppingBasket, Dices, Shuffle, Users, LogOut, Receipt } from "lucide-react";
-import { supabase } from "../supabaseClient";
+import { Wallet, ShoppingBasket, Dices, Shuffle, Users, LogOut, Receipt, Heart } from "lucide-react";
+import { supabase, isMock } from "../supabaseClient";
+import { canAccessWedding } from "../lib/weddingAccess";
 import Avatar from "./Avatar";
 import BackgroundArt from "./BackgroundArt";
 import Celebration from "./Celebration";
@@ -10,8 +11,9 @@ import Groceries from "./Groceries";
 import Games from "./Games";
 import Fate from "./Fate";
 import House from "./House";
+import Wedding from "./Wedding";
 
-const TABS = [
+const BASE_TABS = [
   ["money", "Money", Wallet],
   ["groceries", "Groceries", ShoppingBasket],
   ["games", "Play", Dices],
@@ -19,10 +21,28 @@ const TABS = [
   ["house", "House", Users],
 ];
 
-export default function Ledger({ me, members, expenses, settlements, groceries, games, refresh }) {
+export default function Ledger({
+  me,
+  members,
+  expenses,
+  settlements,
+  groceries,
+  games,
+  weddingTasks,
+  weddingSubtasks,
+  weddingVendorOptions,
+  weddingMiscItems,
+  weddingSettings,
+  refresh,
+}) {
   const [section, setSection] = useState("money");
   const [busy, setBusy] = useState(false);
   const [celebration, setCelebration] = useState(null); // null | "expense" | "settle" | "spin"
+
+  // UI-only gate — see src/lib/weddingAccess.js. The tab (and its data) is
+  // hidden from the other housemates; RLS is what actually enforces it.
+  const showWedding = canAccessWedding(me, isMock);
+  const TABS = showWedding ? [...BASE_TABS, ["wedding", "Wedding", Heart]] : BASE_TABS;
 
   const saveMembers = async (updated) => {
     setBusy(true);
@@ -78,6 +98,16 @@ export default function Ledger({ me, members, expenses, settlements, groceries, 
                 {section === "games" && <Games games={games} refresh={refresh} onCelebrate={setCelebration} />}
                 {section === "fate" && <Fate onCelebrate={setCelebration} />}
                 {section === "house" && <House members={members} onSave={saveMembers} busy={busy} />}
+                {section === "wedding" && showWedding && (
+                  <Wedding
+                    tasks={weddingTasks}
+                    subtasks={weddingSubtasks}
+                    vendorOptions={weddingVendorOptions}
+                    miscItems={weddingMiscItems}
+                    settings={weddingSettings}
+                    refresh={refresh}
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </div>

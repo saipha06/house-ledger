@@ -4,10 +4,13 @@ A shared household app for a 4-person house: expenses with debt-simplification, 
 
 **No extra setup for this version** — push to GitHub as usual and Vercel installs the new dependencies (`tailwindcss`, `@tailwindcss/vite`, `framer-motion`) automatically from `package.json` on the next build. Nothing changes on the Supabase side.
 
+## 0. Local development without Supabase
+
+`npm install && npm run dev` works with no setup: if `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` aren't set, the app automatically runs against an in-memory, localStorage-backed mock (`src/lib/mockSupabase.js`) seeded with 4 members, sample expenses, groceries, and games. Sign in with any of `alex@casa.dev` / `sam@casa.dev` / `riley@casa.dev` / `priya@casa.dev`, password `demo1234` (or "New here" to create your own) — a "Mock data" badge shows top-right whenever this is active. Data persists across reloads in that browser; run `window.__casaMockReset()` in the console to wipe and reseed. Set the two env vars (or `VITE_USE_MOCK=true` to force mock even with real creds present) to switch backends.
 
 ## 1. Set up Supabase
 
-**Already ran the schema before and just adding Groceries/Games?** Skip to step 1a below and run only that snippet — no need to touch anything else.
+**Already ran the schema before and just adding Groceries/Games, or the Wedding planner?** Skip to step 1a or 1b below and run only that snippet — no need to touch anything else.
 
 1. Open your Supabase project → **SQL Editor** → New query.
 2. Paste the contents of `supabase/schema.sql` and run it. This creates the `members`, `expenses`, `expense_splits`, `settlements`, `grocery_items`, and `games` tables with row-level security enabled. (Safe to re-run in full even if you ran an earlier version — every table uses `if not exists`.)
@@ -43,6 +46,89 @@ create policy "authenticated all games" on games
 
 alter publication supabase_realtime add table grocery_items, games;
 ```
+
+### 1b. Incremental update (Wedding planner only)
+
+Adds a Wedding tab visible **only** to the two auth accounts listed in the policies below (currently `phani@gmail.com` and `anila1211@gmail.com` — edit the emails in every `create policy` statement before running if that's not right). Everyone else's authenticated requests against these tables return zero rows, enforced by Postgres — the frontend just hides the tab for them too, for UX.
+
+Shape: high-level tasks (Venue, Catering, ...) hold subtasks; a subtask that costs money gets one or more vendor options, and approving one sets its quote as that subtask's cost (the database enforces at most one approved option per subtask). Misc items are standalone costs not tied to any task. `wedding_settings` holds a single shared row with the overall budget target.
+
+```sql
+create table if not exists wedding_tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_subtasks (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references wedding_tasks(id) on delete cascade,
+  title text not null,
+  link text,
+  comments text,
+  due_date date,
+  done boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_vendor_options (
+  id uuid primary key default gen_random_uuid(),
+  subtask_id uuid not null references wedding_subtasks(id) on delete cascade,
+  vendor_name text not null,
+  quote_amount numeric,
+  link text,
+  notes text,
+  approved boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create unique index if not exists idx_one_approved_option_per_subtask
+  on wedding_vendor_options(subtask_id) where approved;
+
+create table if not exists wedding_misc_items (
+  id uuid primary key default gen_random_uuid(),
+  description text not null,
+  amount numeric not null,
+  link text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_settings (
+  id boolean primary key default true check (id),
+  budget_target numeric,
+  updated_at timestamptz default now()
+);
+
+alter table wedding_tasks enable row level security;
+alter table wedding_subtasks enable row level security;
+alter table wedding_vendor_options enable row level security;
+alter table wedding_misc_items enable row level security;
+alter table wedding_settings enable row level security;
+
+create policy "wedding planners only" on wedding_tasks
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_subtasks
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_vendor_options
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_misc_items
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_settings
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+alter publication supabase_realtime add table wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings;
+```
+
 3. Go to **Authentication → Providers → Email** and turn **OFF "Confirm email"**. This is the important one — with it off, creating an account signs you in immediately with no verification email, so you never hit Supabase's email rate limits.
 4. (Site URL / Redirect URLs don't matter for this flow since there's no email link to redirect from — safe to leave defaults.)
 5. Go to **Project Settings → API** and copy:

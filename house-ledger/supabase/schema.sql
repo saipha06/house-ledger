@@ -86,3 +86,93 @@ create policy "authenticated all games" on games
 
 -- Enable realtime updates on these tables (safe to run even if already enabled)
 alter publication supabase_realtime add table members, expenses, expense_splits, settlements, grocery_items, games;
+
+-- Wedding planner (added later) — visible to every table row the same way as
+-- the rest of the app, but RLS below restricts read/write to Phani + Anila's
+-- auth accounts specifically, by email. Unlike the tables above, this is not
+-- "any authenticated housemate" — the other two housemates' authenticated
+-- queries against these tables return zero rows, enforced in Postgres, not
+-- just hidden in the UI.
+--
+-- Shape: high-level tasks (Venue, Catering, ...) each hold subtasks; a
+-- subtask that costs money gets one or more vendor options, and approving
+-- one sets its quote as that subtask's cost. Misc items are standalone costs
+-- not tied to any task. Total spend = sum of approved option quotes + misc.
+create table if not exists wedding_tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_subtasks (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references wedding_tasks(id) on delete cascade,
+  title text not null,
+  link text,
+  comments text,
+  due_date date,
+  done boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_vendor_options (
+  id uuid primary key default gen_random_uuid(),
+  subtask_id uuid not null references wedding_subtasks(id) on delete cascade,
+  vendor_name text not null,
+  quote_amount numeric,
+  link text,
+  notes text,
+  approved boolean not null default false,
+  created_at timestamptz default now()
+);
+
+-- Enforces "at most one approved option per subtask" in the database itself —
+-- not just a UI convention. Approving a new option must first un-approve the
+-- old one, or this insert/update fails.
+create unique index if not exists idx_one_approved_option_per_subtask
+  on wedding_vendor_options(subtask_id) where approved;
+
+create table if not exists wedding_misc_items (
+  id uuid primary key default gen_random_uuid(),
+  description text not null,
+  amount numeric not null,
+  link text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- Single shared row holding the overall budget target, so both planners see
+-- the same "remaining" figure rather than each having their own local number.
+create table if not exists wedding_settings (
+  id boolean primary key default true check (id),
+  budget_target numeric,
+  updated_at timestamptz default now()
+);
+
+alter table wedding_tasks enable row level security;
+alter table wedding_subtasks enable row level security;
+alter table wedding_vendor_options enable row level security;
+alter table wedding_misc_items enable row level security;
+alter table wedding_settings enable row level security;
+
+create policy "wedding planners only" on wedding_tasks
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_subtasks
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_vendor_options
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_misc_items
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_settings
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+alter publication supabase_realtime add table wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings;
