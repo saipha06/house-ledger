@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, Suspense } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Check, X, ArrowRight, Scale, Receipt, HandCoins, FileUp } from "lucide-react";
 import { supabase } from "../supabaseClient";
@@ -6,10 +6,7 @@ import { computeBalances, simplifyDebts, fmt } from "../lib/balances";
 import SectionLabel from "./SectionLabel";
 import AnimatedAmount from "./AnimatedAmount";
 import Avatar from "./Avatar";
-
-// pdfjs-dist (pulled in by Import) is large — code-split it into its own
-// chunk so the other three subtabs' users never download it.
-const Import = lazy(() => import("./Import"));
+import Import from "./Import";
 
 const SUBTABS = [
   ["balances", "Balances", Scale],
@@ -113,14 +110,12 @@ export default function Money({ me, members, expenses, settlements, refresh, onC
               <SettleView members={members} simplified={simplified} memberName={memberName} onSettle={addSettlement} busy={busy} />
             )}
             {view === "import" && (
-              <Suspense fallback={<div className="text-[13px] opacity-55 italic py-6 text-center">Loading…</div>}>
-                <Import
-                  onApprove={(txn) => {
-                    setPrefill({ description: txn.summary, amount: txn.amount });
-                    setView("add");
-                  }}
-                />
-              </Suspense>
+              <Import
+                onApprove={(txn) => {
+                  setPrefill({ description: txn.summary, amount: txn.amount });
+                  setView("add");
+                }}
+              />
             )}
           </motion.div>
         </AnimatePresence>

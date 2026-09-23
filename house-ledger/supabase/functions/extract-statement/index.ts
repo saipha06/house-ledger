@@ -1,14 +1,26 @@
-// Takes raw text already extracted client-side (via pdf.js) from a bank
-// statement PDF, sends it to Gemini for transaction extraction + tier
-// classification, and returns the parsed list. No DB writes here — this is
-// a pure transform, matching the app's "review before it touches the real
+// Takes a bank statement PDF (base64-encoded), extracts its text with
+// pdf.js running server-side, redacts obvious PII before it goes anywhere
+// near an LLM, then sends the redacted text to Gemini for transaction
+// extraction + tier classification. No DB writes here — this is a pure
+// transform, matching the app's "review before it touches the real
 // expenses table" design.
+//
+// PDF parsing was originally client-side, but pdf.js's browser Worker (and
+// its module-loading fallback) hit a reproducible crash on at least one
+// WKWebView-based iOS browser that couldn't be diagnosed without device
+// devtools access. Running it server-side, in a plain Deno environment
+// where pdf.js already runs reliably without a Worker at all, sidesteps
+// that whole compatibility surface. Trade-off: the raw (unredacted) PDF
+// now briefly reaches this function before redaction runs, whereas before
+// it never left the browser — Gemini's exposure is unchanged either way.
 //
 // Requires GEMINI_API_KEY as a function secret:
 //   supabase secrets set GEMINI_API_KEY=...
 //
 // Deploy JWT-verified (the default) so only signed-in Casa users can call
 // this — it costs real (if free-tier) Gemini usage per call.
+
+import * as pdfjsLib from "npm:pdfjs-dist@6.3.289/legacy/build/pdf.mjs";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -60,18 +72,83 @@ Return only transactions actually present in the text below — do not invent or
 STATEMENT TEXT:
 `;
 
+// Strips content the classification task doesn't need before it ever
+// reaches Gemini — account/card numbers, and any chunk of text repeating
+// near-verbatim across pages. Real statements restate the cardholder's
+// name, account number, and statement period in a header/footer on every
+// page; actual transaction lines never repeat byte-for-byte like that.
+// Bank-agnostic on purpose (shape + repetition, not per-bank wording) —
+// this is heuristic risk-reduction, not a guarantee of complete PII removal.
+function redactSensitive(pages: string[]): string[] {
+  const numberPattern = /\b(?:\d[\s-]?){12,19}\b/g;
+  const zipPattern = /\b[A-Z]{2}\s+\d{5}(-\d{4})?\b/g;
+  let cleaned = pages.map((p) => p.replace(numberPattern, "[redacted]").replace(zipPattern, "[redacted]"));
+
+  if (cleaned.length > 1) {
+    const chunksOf = (text: string) =>
+      text
+        .split(/(?<=[.!?])\s+|\s{2,}/)
+        .map((c) => c.trim())
+        .filter((c) => c.length >= 12);
+    const counts = new Map<string, number>();
+    cleaned.forEach((page) => {
+      new Set(chunksOf(page)).forEach((chunk) => counts.set(chunk, (counts.get(chunk) || 0) + 1));
+    });
+    const threshold = Math.max(2, Math.ceil(cleaned.length * 0.5));
+    const boilerplate = [...counts.entries()].filter(([, n]) => n >= threshold).map(([c]) => c);
+    cleaned = cleaned.map((page) => boilerplate.reduce((text, chunk) => text.split(chunk).join(" "), page));
+  }
+
+  return cleaned;
+}
+
+async function extractPdfText(pdfBytes: Uint8Array): Promise<string> {
+  const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // deno-lint-ignore no-explicit-any
+    pages.push(content.items.map((item: any) => item.str).join(" "));
+  }
+  return redactSensitive(pages).join("\n\n");
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS_HEADERS });
   }
 
   try {
-    const { text } = await req.json();
-    if (!text || typeof text !== "string" || !text.trim()) {
-      return new Response(JSON.stringify({ error: "Missing statement text" }), {
+    const { pdfBase64 } = await req.json();
+    if (!pdfBase64 || typeof pdfBase64 !== "string") {
+      return new Response(JSON.stringify({ error: "Missing pdfBase64" }), {
         status: 400,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
+    }
+
+    let text: string;
+    try {
+      text = await extractPdfText(base64ToBytes(pdfBase64));
+    } catch (err) {
+      return new Response(JSON.stringify({ error: "Reading the PDF failed: " + String(err) }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    if (!text.trim()) {
+      return new Response(
+        JSON.stringify({ error: "Couldn't find any text in that PDF — is it a scanned image rather than a text PDF?" }),
+        { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
     }
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");

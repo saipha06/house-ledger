@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Upload, Check, X, ChevronDown } from "lucide-react";
 import { supabase } from "../supabaseClient";
-import { extractPdfText } from "../lib/pdfExtract";
+import { readFileBase64 } from "../lib/readFileBase64";
 import { mainQueue, hiddenTiers } from "../lib/statementReview";
 import { fmt } from "../lib/balances";
 import SectionLabel from "./SectionLabel";
@@ -26,15 +26,15 @@ function describeError(stage, err) {
   return `${stage} failed: ${name}: ${message}${firstFrame ? ` (${firstFrame})` : ""}`;
 }
 
-// Upload a bank statement PDF, extract its text client-side, send it to the
-// extract-statement Edge Function for transaction extraction + tier
-// classification, then review one card at a time. Nothing touches the real
-// expenses table until a card is explicitly approved — approving hands the
-// transaction off to Money's existing "Add" flow (prefilled), which is
-// where the actual insert happens. Entirely in-memory otherwise: closing or
-// reloading this tab loses an in-progress review, by design (see the
-// workflow spec — session persistence was deliberately parked as a later
-// enhancement).
+// Upload a bank statement PDF, send it to the extract-statement Edge
+// Function (which extracts + redacts + classifies server-side — see that
+// function for why PDF parsing isn't done client-side), then review one
+// card at a time. Nothing touches the real expenses table until a card is
+// explicitly approved — approving hands the transaction off to Money's
+// existing "Add" flow (prefilled), which is where the actual insert
+// happens. Entirely in-memory otherwise: closing or reloading this tab
+// loses an in-progress review, by design (see the workflow spec — session
+// persistence was deliberately parked as a later enhancement).
 export default function Import({ onApprove }) {
   const [status, setStatus] = useState("idle"); // idle | extracting | reviewing | empty | error
   const [error, setError] = useState("");
@@ -48,26 +48,20 @@ export default function Import({ onApprove }) {
     setError("");
 
     // Wrapped per-stage (not one big try/catch) so a failure names exactly
-    // which step it happened in — pdf.js text extraction, the network call
-    // to the Edge Function, or parsing its response — since "something went
-    // wrong" alone isn't enough to debug a device we can't attach devtools to.
-    let text;
+    // which step it happened in, since "something went wrong" alone isn't
+    // enough to debug a device we can't attach devtools to.
+    let pdfBase64;
     try {
-      text = await extractPdfText(file);
+      pdfBase64 = await readFileBase64(file);
     } catch (err) {
-      setError(describeError("Reading the PDF", err));
-      setStatus("error");
-      return;
-    }
-    if (!text.trim()) {
-      setError("Couldn't find any text in that PDF — is it a scanned image rather than a text PDF?");
+      setError(describeError("Reading the file", err));
       setStatus("error");
       return;
     }
 
     let data, fnError;
     try {
-      ({ data, error: fnError } = await supabase.functions.invoke("extract-statement", { body: { text } }));
+      ({ data, error: fnError } = await supabase.functions.invoke("extract-statement", { body: { pdfBase64 } }));
     } catch (err) {
       setError(describeError("Contacting the server", err));
       setStatus("error");
