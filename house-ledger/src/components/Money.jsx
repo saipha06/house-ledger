@@ -9,11 +9,11 @@ import Avatar from "./Avatar";
 import Import from "./Import";
 
 const SUBTABS = [
+  ["import", "Import", FileUp],
   ["balances", "Balances", Scale],
   ["history", "History", Receipt],
   ["add", "Add", Plus],
   ["settle", "Settle", HandCoins],
-  ["import", "Import", FileUp],
 ];
 
 const pillClass = (active) =>
@@ -26,6 +26,12 @@ export default function Money({ me, members, expenses, settlements, refresh, onC
   const [view, setView] = useState("balances");
   const [busy, setBusy] = useState(false);
   const [prefill, setPrefill] = useState(null);
+  // Lifted out of Import itself: that component unmounts whenever `view`
+  // moves away from "import" (e.g. approving a card navigates to "add"),
+  // which would otherwise wipe the in-progress review queue and leave no
+  // way back to the rest of the transactions.
+  const [importState, setImportState] = useState({ status: "idle", error: "", transactions: [], reviewedIds: new Set(), showHidden: false });
+  const patchImportState = (patch) => setImportState((prev) => ({ ...prev, ...patch }));
 
   const balances = useMemo(() => computeBalances(members, expenses, settlements), [members, expenses, settlements]);
   const simplified = useMemo(() => simplifyDebts(balances), [balances]);
@@ -43,7 +49,11 @@ export default function Money({ me, members, expenses, settlements, refresh, onC
         participants.map((p) => ({ expense_id: expense.id, member_id: p.userId, share_amount: p.share }))
       );
       await refresh();
-      setView("history");
+      // Came from the Import review queue? Go back there to keep reviewing
+      // the rest, instead of History — the queue's still intact since its
+      // state lives here now, not in Import itself.
+      setView(prefill ? "import" : "history");
+      setPrefill(null);
       onCelebrate("expense");
     }
     setBusy(false);
@@ -111,6 +121,8 @@ export default function Money({ me, members, expenses, settlements, refresh, onC
             )}
             {view === "import" && (
               <Import
+                state={importState}
+                onChange={patchImportState}
                 onApprove={(txn) => {
                   setPrefill({ description: txn.summary, amount: txn.amount });
                   setView("add");

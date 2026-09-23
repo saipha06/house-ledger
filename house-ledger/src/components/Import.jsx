@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, Check, X, ChevronDown } from "lucide-react";
+import { Upload, Check, X, ChevronDown, Loader2 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { readFileBase64 } from "../lib/readFileBase64";
 import { mainQueue, hiddenTiers } from "../lib/statementReview";
@@ -32,20 +31,19 @@ function describeError(stage, err) {
 // card at a time. Nothing touches the real expenses table until a card is
 // explicitly approved — approving hands the transaction off to Money's
 // existing "Add" flow (prefilled), which is where the actual insert
-// happens. Entirely in-memory otherwise: closing or reloading this tab
-// loses an in-progress review, by design (see the workflow spec — session
-// persistence was deliberately parked as a later enhancement).
-export default function Import({ onApprove }) {
-  const [status, setStatus] = useState("idle"); // idle | extracting | reviewing | empty | error
-  const [error, setError] = useState("");
-  const [transactions, setTransactions] = useState([]);
-  const [reviewedIds, setReviewedIds] = useState(new Set());
-  const [showHidden, setShowHidden] = useState(false);
+// happens.
+//
+// Controlled by the parent (Money): the review queue's state lives there,
+// not here, because this component unmounts whenever the user navigates to
+// "add" to fill in an approved card — without lifting the state up, that
+// navigation would wipe the whole in-progress queue with no way back to
+// the rest of the transactions.
+export default function Import({ state, onChange, onApprove }) {
+  const { status, error, transactions, reviewedIds, showHidden } = state;
 
   const handleFile = async (file) => {
     if (!file) return;
-    setStatus("extracting");
-    setError("");
+    onChange({ status: "extracting", error: "" });
 
     // Wrapped per-stage (not one big try/catch) so a failure names exactly
     // which step it happened in, since "something went wrong" alone isn't
@@ -54,8 +52,7 @@ export default function Import({ onApprove }) {
     try {
       pdfBase64 = await readFileBase64(file);
     } catch (err) {
-      setError(describeError("Reading the file", err));
-      setStatus("error");
+      onChange({ status: "error", error: describeError("Reading the file", err) });
       return;
     }
 
@@ -63,39 +60,32 @@ export default function Import({ onApprove }) {
     try {
       ({ data, error: fnError } = await supabase.functions.invoke("extract-statement", { body: { pdfBase64 } }));
     } catch (err) {
-      setError(describeError("Contacting the server", err));
-      setStatus("error");
+      onChange({ status: "error", error: describeError("Contacting the server", err) });
       return;
     }
     if (fnError) {
-      setError(describeError("Contacting the server", fnError));
-      setStatus("error");
+      onChange({ status: "error", error: describeError("Contacting the server", fnError) });
       return;
     }
     if (data?.error) {
-      setError(describeError("Classifying transactions", new Error(data.error)));
-      setStatus("error");
+      onChange({ status: "error", error: describeError("Classifying transactions", new Error(data.error)) });
       return;
     }
 
     try {
       const withIds = (data?.transactions || []).map((t) => ({ ...t, id: `local-${nextLocalId++}` }));
-      setTransactions(withIds);
-      setReviewedIds(new Set());
-      setShowHidden(false);
-      setStatus(withIds.length ? "reviewing" : "empty");
+      onChange({ transactions: withIds, reviewedIds: new Set(), showHidden: false, status: withIds.length ? "reviewing" : "empty" });
     } catch (err) {
-      setError(describeError("Reading the results", err));
-      setStatus("error");
+      onChange({ status: "error", error: describeError("Reading the results", err) });
     }
   };
 
   const queue = mainQueue(transactions).filter((t) => !reviewedIds.has(t.id));
   const hiddenUnreviewed = hiddenTiers(transactions).filter((t) => !reviewedIds.has(t.id));
 
-  const skip = (id) => setReviewedIds((prev) => new Set(prev).add(id));
+  const skip = (id) => onChange({ reviewedIds: new Set(reviewedIds).add(id) });
   const approve = (txn) => {
-    setReviewedIds((prev) => new Set(prev).add(txn.id));
+    onChange({ reviewedIds: new Set(reviewedIds).add(txn.id) });
     onApprove(txn);
   };
 
@@ -121,7 +111,12 @@ export default function Import({ onApprove }) {
     return (
       <div>
         <SectionLabel n="01" title="Reading statement…" />
-        <div className="text-[13px] opacity-55 italic py-6 text-center">Extracting and classifying transactions — this takes a few seconds.</div>
+        <div className="flex flex-col items-center gap-3 py-10">
+          <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }} className="text-brass">
+            <Loader2 size={30} strokeWidth={2.2} />
+          </motion.span>
+          <div className="text-[13px] opacity-65 text-center">Extracting and classifying transactions — this can take up to 10-15 seconds.</div>
+        </div>
       </div>
     );
   }
@@ -141,7 +136,7 @@ export default function Import({ onApprove }) {
         <div className="mt-4">
           <motion.button
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowHidden((v) => !v)}
+            onClick={() => onChange({ showHidden: !showHidden })}
             className="w-full flex items-center justify-between px-3.5 py-2.5 bg-paper-2 border border-charcoal/10 rounded-lg text-[13px] font-medium cursor-pointer"
           >
             <span>{hiddenUnreviewed.length} skipped as personal — review them</span>
@@ -160,7 +155,7 @@ export default function Import({ onApprove }) {
       )}
 
       <button
-        onClick={() => setStatus("idle")}
+        onClick={() => onChange({ status: "idle" })}
         className="mt-4 text-[11px] uppercase tracking-wide underline opacity-55 bg-transparent border-none cursor-pointer p-0"
       >
         Upload a different statement
