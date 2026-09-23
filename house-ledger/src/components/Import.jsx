@@ -16,6 +16,16 @@ const TIER_LABEL = {
 
 let nextLocalId = 0;
 
+// Surfaces enough to actually debug a failure on a device we can't attach
+// devtools to: which stage it happened in, the real error name/message
+// (not just "something went wrong"), and the first stack frame if present.
+function describeError(stage, err) {
+  const name = err?.name || "Error";
+  const message = err?.message || String(err);
+  const firstFrame = typeof err?.stack === "string" ? err.stack.split("\n")[1]?.trim() : null;
+  return `${stage} failed: ${name}: ${message}${firstFrame ? ` (${firstFrame})` : ""}`;
+}
+
 // Upload a bank statement PDF, extract its text client-side, send it to the
 // extract-statement Edge Function for transaction extraction + tier
 // classification, then review one card at a time. Nothing touches the real
@@ -36,19 +46,52 @@ export default function Import({ onApprove }) {
     if (!file) return;
     setStatus("extracting");
     setError("");
+
+    // Wrapped per-stage (not one big try/catch) so a failure names exactly
+    // which step it happened in — pdf.js text extraction, the network call
+    // to the Edge Function, or parsing its response — since "something went
+    // wrong" alone isn't enough to debug a device we can't attach devtools to.
+    let text;
     try {
-      const text = await extractPdfText(file);
-      if (!text.trim()) throw new Error("Couldn't find any text in that PDF — is it a scanned image rather than a text PDF?");
-      const { data, error: fnError } = await supabase.functions.invoke("extract-statement", { body: { text } });
-      if (fnError) throw new Error(fnError.message || "Extraction failed");
-      if (data?.error) throw new Error(data.error);
+      text = await extractPdfText(file);
+    } catch (err) {
+      setError(describeError("Reading the PDF", err));
+      setStatus("error");
+      return;
+    }
+    if (!text.trim()) {
+      setError("Couldn't find any text in that PDF — is it a scanned image rather than a text PDF?");
+      setStatus("error");
+      return;
+    }
+
+    let data, fnError;
+    try {
+      ({ data, error: fnError } = await supabase.functions.invoke("extract-statement", { body: { text } }));
+    } catch (err) {
+      setError(describeError("Contacting the server", err));
+      setStatus("error");
+      return;
+    }
+    if (fnError) {
+      setError(describeError("Contacting the server", fnError));
+      setStatus("error");
+      return;
+    }
+    if (data?.error) {
+      setError(describeError("Classifying transactions", new Error(data.error)));
+      setStatus("error");
+      return;
+    }
+
+    try {
       const withIds = (data?.transactions || []).map((t) => ({ ...t, id: `local-${nextLocalId++}` }));
       setTransactions(withIds);
       setReviewedIds(new Set());
       setShowHidden(false);
       setStatus(withIds.length ? "reviewing" : "empty");
     } catch (err) {
-      setError(err.message || "Something went wrong reading that statement.");
+      setError(describeError("Reading the results", err));
       setStatus("error");
     }
   };
