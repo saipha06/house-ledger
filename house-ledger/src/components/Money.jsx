@@ -1,17 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Check, X, ArrowRight, Scale, Receipt, HandCoins } from "lucide-react";
+import { Plus, Check, X, ArrowRight, Scale, Receipt, HandCoins, FileUp } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { computeBalances, simplifyDebts, fmt } from "../lib/balances";
 import SectionLabel from "./SectionLabel";
 import AnimatedAmount from "./AnimatedAmount";
 import Avatar from "./Avatar";
 
+// pdfjs-dist (pulled in by Import) is large — code-split it into its own
+// chunk so the other three subtabs' users never download it.
+const Import = lazy(() => import("./Import"));
+
 const SUBTABS = [
   ["balances", "Balances", Scale],
   ["history", "History", Receipt],
   ["add", "Add", Plus],
   ["settle", "Settle", HandCoins],
+  ["import", "Import", FileUp],
 ];
 
 const pillClass = (active) =>
@@ -20,9 +25,10 @@ const pillClass = (active) =>
   }`;
 const inputClass = "px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40";
 
-export default function Money({ members, expenses, settlements, refresh, onCelebrate }) {
+export default function Money({ me, members, expenses, settlements, refresh, onCelebrate }) {
   const [view, setView] = useState("balances");
   const [busy, setBusy] = useState(false);
+  const [prefill, setPrefill] = useState(null);
 
   const balances = useMemo(() => computeBalances(members, expenses, settlements), [members, expenses, settlements]);
   const simplified = useMemo(() => simplifyDebts(balances), [balances]);
@@ -71,7 +77,10 @@ export default function Money({ members, expenses, settlements, refresh, onCeleb
             <motion.button
               key={key}
               whileTap={{ scale: 0.94 }}
-              onClick={() => setView(key)}
+              onClick={() => {
+                setPrefill(null);
+                setView(key);
+              }}
               className={`relative px-3.5 py-1.5 text-[12.5px] font-semibold rounded-full border whitespace-nowrap flex items-center ${
                 active ? "text-brass border-transparent" : "text-charcoal border-charcoal/20"
               }`}
@@ -99,9 +108,19 @@ export default function Money({ members, expenses, settlements, refresh, onCeleb
               <BalancesView balances={balances} members={members} simplified={simplified} memberName={memberName} />
             )}
             {view === "history" && <HistoryView expenses={expenses} memberName={memberName} onDelete={deleteExpense} busy={busy} />}
-            {view === "add" && <AddExpenseView members={members} onAdd={addExpense} busy={busy} />}
+            {view === "add" && <AddExpenseView members={members} onAdd={addExpense} busy={busy} prefill={prefill} me={me} />}
             {view === "settle" && (
               <SettleView members={members} simplified={simplified} memberName={memberName} onSettle={addSettlement} busy={busy} />
+            )}
+            {view === "import" && (
+              <Suspense fallback={<div className="text-[13px] opacity-55 italic py-6 text-center">Loading…</div>}>
+                <Import
+                  onApprove={(txn) => {
+                    setPrefill({ description: txn.summary, amount: txn.amount });
+                    setView("add");
+                  }}
+                />
+              </Suspense>
             )}
           </motion.div>
         </AnimatePresence>
@@ -234,10 +253,10 @@ function HistoryView({ expenses, memberName, onDelete, busy }) {
   );
 }
 
-function AddExpenseView({ members, onAdd, busy }) {
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paidBy, setPaidBy] = useState(members[0]?.id);
+function AddExpenseView({ members, onAdd, busy, prefill, me }) {
+  const [description, setDescription] = useState(prefill?.description || "");
+  const [amount, setAmount] = useState(prefill?.amount != null ? String(prefill.amount) : "");
+  const [paidBy, setPaidBy] = useState((prefill && me?.id) || members[0]?.id);
   const [splitType, setSplitType] = useState("equal");
   const [customShares, setCustomShares] = useState({});
   const [participantIds, setParticipantIds] = useState(members.map((m) => m.id));

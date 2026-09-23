@@ -92,7 +92,7 @@ export default function Ledger({
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {section === "money" && (
-                  <Money members={members} expenses={expenses} settlements={settlements} refresh={refresh} onCelebrate={setCelebration} />
+                  <Money me={me} members={members} expenses={expenses} settlements={settlements} refresh={refresh} onCelebrate={setCelebration} />
                 )}
                 {section === "groceries" && <Groceries items={groceries} members={members} me={me} refresh={refresh} />}
                 {section === "games" && <Games games={games} refresh={refresh} onCelebrate={setCelebration} />}
