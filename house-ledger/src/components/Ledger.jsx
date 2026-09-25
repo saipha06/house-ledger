@@ -33,6 +33,8 @@ export default function Ledger({
   weddingVendorOptions,
   weddingMiscItems,
   weddingSettings,
+  weddingEvents,
+  weddingGuests,
   splitwiseConnection,
   refresh,
 }) {
@@ -116,6 +118,8 @@ export default function Ledger({
                     vendorOptions={weddingVendorOptions}
                     miscItems={weddingMiscItems}
                     settings={weddingSettings}
+                    events={weddingEvents}
+                    guests={weddingGuests}
                     refresh={refresh}
                   />
                 )}

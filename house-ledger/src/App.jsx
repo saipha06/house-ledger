@@ -32,6 +32,8 @@ export default function App() {
   const [weddingVendorOptions, setWeddingVendorOptions] = useState([]);
   const [weddingMiscItems, setWeddingMiscItems] = useState([]);
   const [weddingSettings, setWeddingSettings] = useState(null);
+  const [weddingEvents, setWeddingEvents] = useState([]);
+  const [weddingGuests, setWeddingGuests] = useState([]);
   const [splitwiseConnection, setSplitwiseConnection] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -65,6 +67,8 @@ export default function App() {
       weddingVendorOptionsRes,
       weddingMiscItemsRes,
       weddingSettingsRes,
+      weddingEventsRes,
+      weddingGuestsRes,
       splitwiseConnectionRes,
     ] = await Promise.all([
       supabase.from("members").select("*").order("created_at"),
@@ -77,6 +81,8 @@ export default function App() {
       supabase.from("wedding_vendor_options").select("*").order("created_at"),
       supabase.from("wedding_misc_items").select("*").order("created_at"),
       supabase.from("wedding_settings").select("*").maybeSingle(),
+      supabase.from("wedding_events").select("*").order("created_at"),
+      supabase.from("wedding_guests").select("*").order("created_at"),
       // RLS on this table already restricts it to the caller's own row, so
       // this is never anyone else's connection regardless of what's asked for.
       supabase.from("splitwise_connections").select("*").maybeSingle(),
@@ -92,6 +98,8 @@ export default function App() {
     setWeddingVendorOptions(weddingVendorOptionsRes.data || []);
     setWeddingMiscItems(weddingMiscItemsRes.data || []);
     setWeddingSettings(weddingSettingsRes.data || null);
+    setWeddingEvents(weddingEventsRes.data || []);
+    setWeddingGuests(weddingGuestsRes.data || []);
     setSplitwiseConnection(splitwiseConnectionRes.data || null);
   }, []);
 
@@ -132,6 +140,8 @@ export default function App() {
       .on("postgres_changes", { event: "*", schema: "public", table: "wedding_vendor_options" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "wedding_misc_items" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "wedding_settings" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wedding_events" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wedding_guests" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "splitwise_connections" }, fetchAll)
       .subscribe();
     return () => supabase.removeChannel(channel);
@@ -181,6 +191,8 @@ export default function App() {
         weddingVendorOptions={weddingVendorOptions}
         weddingMiscItems={weddingMiscItems}
         weddingSettings={weddingSettings}
+        weddingEvents={weddingEvents}
+        weddingGuests={weddingGuests}
         splitwiseConnection={splitwiseConnection}
         refresh={fetchAll}
       />

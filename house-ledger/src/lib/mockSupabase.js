@@ -9,7 +9,7 @@
 // so UI/logic changes can be iterated on and seen immediately. Real Supabase
 // is used automatically once VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are set.
 
-const STORAGE_KEY = "casa-mock-db-v1";
+const STORAGE_KEY = "casa-mock-db-v2";
 const SESSION_KEY = "casa-mock-session-v1";
 export const DEMO_PASSWORD = "demo1234";
 export const DEMO_EMAILS = ["alex@casa.dev", "sam@casa.dev", "riley@casa.dev", "priya@casa.dev"];
@@ -82,11 +82,25 @@ function seedDb() {
     { id: uid(), description: "Thank-you cards", amount: 80, link: "", notes: "", created_at: now() },
   ];
 
-  const wedding_settings = [{ id: true, budget_target: 10000, updated_at: now() }];
+  const wedding_settings = [{ id: true, budget_target: 10000, wedding_date: "2026-12-12", updated_at: now() }];
+
+  const wedding_events = [
+    { id: uid(), title: "Sangeet", event_date: "2026-12-11", start_time: "18:00", end_time: "22:00", location: "Golden Oak Venue — Terrace", notes: "Dinner + performances", created_at: now() },
+    { id: uid(), title: "Ceremony", event_date: "2026-12-12", start_time: "10:00", end_time: "12:00", location: "Golden Oak Venue — Main Hall", notes: "", created_at: now() },
+    { id: uid(), title: "Reception", event_date: "2026-12-12", start_time: "18:30", end_time: "23:00", location: "Golden Oak Venue — Ballroom", notes: "First dance at 8pm", created_at: now() },
+  ];
+
+  const wedding_guests = [
+    { id: uid(), name: "Priya Sharma", side: "bride", rsvp: "confirmed", plus_one: true, group_name: "College friends", contact: "", notes: "", created_at: now() },
+    { id: uid(), name: "Raj Mehta", side: "groom", rsvp: "confirmed", plus_one: false, group_name: "Work", contact: "", notes: "", created_at: now() },
+    { id: uid(), name: "The Kapoor Family", side: "shared", rsvp: "pending", plus_one: false, group_name: "Family", contact: "", notes: "Party of 4", created_at: now() },
+    { id: uid(), name: "Sam Roommate", side: "groom", rsvp: "declined", plus_one: false, group_name: "Housemates", contact: "", notes: "Out of town that week", created_at: now() },
+  ];
 
   return {
     users, members, expenses, expense_splits, settlements, grocery_items, games,
     wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings,
+    wedding_events, wedding_guests,
   };
 }
 

@@ -146,7 +146,37 @@ create table if not exists wedding_misc_items (
 create table if not exists wedding_settings (
   id boolean primary key default true check (id),
   budget_target numeric,
+  wedding_date date,
   updated_at timestamptz default now()
+);
+-- wedding_date was added after this table already existed in production —
+-- kept as an explicit idempotent alter so this file stays re-runnable.
+alter table wedding_settings add column if not exists wedding_date date;
+
+-- Wedding-day schedule — deliberately a separate table from wedding_tasks,
+-- which tracks budget/vendor decisions (Venue, Catering, ...), not events.
+-- An event has a date/time/place; it never has a cost or vendor options.
+create table if not exists wedding_events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  event_date date,
+  start_time time,
+  end_time time,
+  location text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists wedding_guests (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  side text, -- 'bride' | 'groom' | 'shared'
+  rsvp text not null default 'pending', -- 'pending' | 'confirmed' | 'declined'
+  plus_one boolean not null default false,
+  group_name text,
+  contact text,
+  notes text,
+  created_at timestamptz default now()
 );
 
 alter table wedding_tasks enable row level security;
@@ -154,6 +184,8 @@ alter table wedding_subtasks enable row level security;
 alter table wedding_vendor_options enable row level security;
 alter table wedding_misc_items enable row level security;
 alter table wedding_settings enable row level security;
+alter table wedding_events enable row level security;
+alter table wedding_guests enable row level security;
 
 create policy "wedding planners only" on wedding_tasks
   for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
@@ -175,7 +207,16 @@ create policy "wedding planners only" on wedding_settings
   for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
   with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
 
+create policy "wedding planners only" on wedding_events
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_guests
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
 alter publication supabase_realtime add table wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings;
+alter publication supabase_realtime add table wedding_events, wedding_guests;
 
 -- Splitwise integration (added later) — each housemate can independently
 -- connect their own Splitwise account to send individual Casa expenses
