@@ -33,8 +33,8 @@ export default function WeddingDashboard({ tasks, subtasks, vendorOptions, miscI
   const guestSegments = useMemo(() => {
     const counts = { confirmed: 0, pending: 0, declined: 0 };
     guests.forEach((g) => {
-      counts[g.rsvp] = (counts[g.rsvp] || 0) + 1;
-      if (g.plus_one) counts[g.rsvp] += 1;
+      const partySize = (Number(g.adults) || 0) + (Number(g.kids) || 0);
+      counts[g.rsvp] = (counts[g.rsvp] || 0) + partySize;
     });
     return [
       { label: "Confirmed", value: counts.confirmed, color: RSVP_COLORS.confirmed },

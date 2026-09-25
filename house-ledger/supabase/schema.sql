@@ -112,8 +112,24 @@ create table if not exists wedding_subtasks (
   comments text,
   due_date date,
   done boolean not null default false,
+  -- timeframe/owner/status mirror the imported workbook's Timeline &
+  -- Checklist sheet — a subtask already is a checklist item (title, due
+  -- date, done), these just add the fields that sheet had and ours didn't.
+  -- `status` is the source of truth once set; `done` is kept in sync
+  -- (done = status = 'done') so nothing that already reads `done` breaks.
+  timeframe text,
+  owner text,
+  status text not null default 'not_started' check (status in ('not_started', 'in_progress', 'done')),
   created_at timestamptz default now()
 );
+alter table wedding_subtasks add column if not exists timeframe text;
+alter table wedding_subtasks add column if not exists owner text;
+alter table wedding_subtasks add column if not exists status text not null default 'not_started';
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'wedding_subtasks_status_check') then
+    alter table wedding_subtasks add constraint wedding_subtasks_status_check check (status in ('not_started', 'in_progress', 'done'));
+  end if;
+end $$;
 
 create table if not exists wedding_vendor_options (
   id uuid primary key default gen_random_uuid(),
@@ -123,8 +139,33 @@ create table if not exists wedding_vendor_options (
   link text,
   notes text,
   approved boolean not null default false,
+  -- Covers the workbook's Venue Comparison + Vendor Tracker sheets: every
+  -- vendor option (not just the approved one) can carry contact info and a
+  -- pipeline status, and an approved one can carry a real actual-cost /
+  -- amount-paid that diverges from the original quote.
+  contact_name text,
+  phone text,
+  email text,
+  deposit_paid numeric,
+  contract_signed boolean not null default false,
+  status text not null default 'researching' check (status in ('researching', 'contacted', 'booked')),
+  actual_cost numeric,
+  amount_paid numeric,
   created_at timestamptz default now()
 );
+alter table wedding_vendor_options add column if not exists contact_name text;
+alter table wedding_vendor_options add column if not exists phone text;
+alter table wedding_vendor_options add column if not exists email text;
+alter table wedding_vendor_options add column if not exists deposit_paid numeric;
+alter table wedding_vendor_options add column if not exists contract_signed boolean not null default false;
+alter table wedding_vendor_options add column if not exists status text not null default 'researching';
+alter table wedding_vendor_options add column if not exists actual_cost numeric;
+alter table wedding_vendor_options add column if not exists amount_paid numeric;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'wedding_vendor_options_status_check') then
+    alter table wedding_vendor_options add constraint wedding_vendor_options_status_check check (status in ('researching', 'contacted', 'booked'));
+  end if;
+end $$;
 
 -- Enforces "at most one approved option per subtask" in the database itself —
 -- not just a UI convention. Approving a new option must first un-approve the
@@ -172,9 +213,46 @@ create table if not exists wedding_guests (
   name text not null,
   side text, -- 'bride' | 'groom' | 'shared'
   rsvp text not null default 'pending', -- 'pending' | 'confirmed' | 'declined'
-  plus_one boolean not null default false,
+  plus_one boolean not null default false, -- superseded by adults/kids below; kept for old rows
   group_name text,
   contact text,
+  notes text,
+  -- From the workbook's Guest List sheet: a row is a party, not always one
+  -- person, so headcount is adults+kids rather than a single +1 flag.
+  adults int not null default 1,
+  kids int not null default 0,
+  relationship text,
+  meal_choice text,
+  table_number text,
+  created_at timestamptz default now()
+);
+alter table wedding_guests add column if not exists adults int not null default 1;
+alter table wedding_guests add column if not exists kids int not null default 0;
+alter table wedding_guests add column if not exists relationship text;
+alter table wedding_guests add column if not exists meal_choice text;
+alter table wedding_guests add column if not exists table_number text;
+
+-- Which guests are attending which of the wedding_events — the workbook's
+-- Guest List sheet had a fixed Mehendi/Sangeet/Haldi/Wedding/Reception
+-- column per event; a join table instead ties to whatever events actually
+-- exist in wedding_events, same pattern as expense_splits <-> expenses.
+create table if not exists wedding_guest_attendance (
+  id uuid primary key default gen_random_uuid(),
+  guest_id uuid not null references wedding_guests(id) on delete cascade,
+  event_id uuid not null references wedding_events(id) on delete cascade,
+  attending boolean not null default true,
+  unique (guest_id, event_id)
+);
+
+create table if not exists wedding_outfits (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid references wedding_events(id) on delete set null,
+  person text not null,
+  item text,
+  color text,
+  cost numeric,
+  ordered boolean not null default false,
+  fitting_date date,
   notes text,
   created_at timestamptz default now()
 );
@@ -186,6 +264,8 @@ alter table wedding_misc_items enable row level security;
 alter table wedding_settings enable row level security;
 alter table wedding_events enable row level security;
 alter table wedding_guests enable row level security;
+alter table wedding_guest_attendance enable row level security;
+alter table wedding_outfits enable row level security;
 
 create policy "wedding planners only" on wedding_tasks
   for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
@@ -215,8 +295,17 @@ create policy "wedding planners only" on wedding_guests
   for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
   with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
 
+create policy "wedding planners only" on wedding_guest_attendance
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
+create policy "wedding planners only" on wedding_outfits
+  for all using (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'))
+  with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
+
 alter publication supabase_realtime add table wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings;
 alter publication supabase_realtime add table wedding_events, wedding_guests;
+alter publication supabase_realtime add table wedding_guest_attendance, wedding_outfits;
 
 -- Splitwise integration (added later) — each housemate can independently
 -- connect their own Splitwise account to send individual Casa expenses

@@ -9,7 +9,7 @@
 // so UI/logic changes can be iterated on and seen immediately. Real Supabase
 // is used automatically once VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are set.
 
-const STORAGE_KEY = "casa-mock-db-v2";
+const STORAGE_KEY = "casa-mock-db-v3";
 const SESSION_KEY = "casa-mock-session-v1";
 export const DEMO_PASSWORD = "demo1234";
 export const DEMO_EMAILS = ["alex@casa.dev", "sam@casa.dev", "riley@casa.dev", "priya@casa.dev"];
@@ -62,19 +62,19 @@ function seedDb() {
   const photoTask = { id: uid(), title: "Photography", created_at: now() };
   const wedding_tasks = [venueTask, cateringTask, photoTask];
 
-  const bookVenue = { id: uid(), task_id: venueTask.id, title: "Book venue", link: "", comments: "Need the space held by March.", due_date: "2026-03-01", done: false, created_at: now() };
-  const siteVisit = { id: uid(), task_id: venueTask.id, title: "Site visit", link: "", comments: "", due_date: "2026-01-15", done: true, created_at: now() };
-  const chooseCaterer = { id: uid(), task_id: cateringTask.id, title: "Choose caterer", link: "", comments: "Ask both about vegetarian options.", due_date: "2026-04-01", done: false, created_at: now() };
-  const bookPhotographer = { id: uid(), task_id: photoTask.id, title: "Book photographer", link: "", comments: "", due_date: "2026-02-20", done: false, created_at: now() };
+  const bookVenue = { id: uid(), task_id: venueTask.id, title: "Book venue", link: "", comments: "Need the space held by March.", due_date: "2026-03-01", done: false, timeframe: "12+ Months Before", owner: "Couple", status: "in_progress", created_at: now() };
+  const siteVisit = { id: uid(), task_id: venueTask.id, title: "Site visit", link: "", comments: "", due_date: "2026-01-15", done: true, timeframe: "12+ Months Before", owner: "Couple", status: "done", created_at: now() };
+  const chooseCaterer = { id: uid(), task_id: cateringTask.id, title: "Choose caterer", link: "", comments: "Ask both about vegetarian options.", due_date: "2026-04-01", done: false, timeframe: "9-11 Months Before", owner: "Couple", status: "not_started", created_at: now() };
+  const bookPhotographer = { id: uid(), task_id: photoTask.id, title: "Book photographer", link: "", comments: "", due_date: "2026-02-20", done: false, timeframe: "9-11 Months Before", owner: "Bride", status: "done", created_at: now() };
   const wedding_subtasks = [bookVenue, siteVisit, chooseCaterer, bookPhotographer];
 
   const wedding_vendor_options = [
-    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Golden Oak Venue", quote_amount: 3000, link: "goldenoak.example", notes: "Includes tables & chairs", approved: true, created_at: now() },
-    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Sunset Hall", quote_amount: 2500, link: "sunsethall.example", notes: "", approved: false, created_at: now() },
-    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Garden Views", quote_amount: 4200, link: "", notes: "Outdoor only, no rain plan", approved: false, created_at: now() },
-    { id: uid(), subtask_id: chooseCaterer.id, vendor_name: "Spice Route Catering", quote_amount: 1800, link: "", notes: "Per-plate, 80 guests", approved: false, created_at: now() },
-    { id: uid(), subtask_id: chooseCaterer.id, vendor_name: "Tandoor & Table", quote_amount: 2100, link: "", notes: "Includes dessert station", approved: false, created_at: now() },
-    { id: uid(), subtask_id: bookPhotographer.id, vendor_name: "Jane Photo Studio", quote_amount: 2200, link: "", notes: "8hr coverage + album", approved: true, created_at: now() },
+    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Golden Oak Venue", quote_amount: 3000, link: "goldenoak.example", notes: "Includes tables & chairs", approved: true, contact_name: "Dana Ruiz", phone: "555-0142", email: "dana@goldenoak.example", deposit_paid: 500, contract_signed: true, status: "booked", actual_cost: 3000, amount_paid: 500, created_at: now() },
+    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Sunset Hall", quote_amount: 2500, link: "sunsethall.example", notes: "", approved: false, status: "contacted", created_at: now() },
+    { id: uid(), subtask_id: bookVenue.id, vendor_name: "Garden Views", quote_amount: 4200, link: "", notes: "Outdoor only, no rain plan", approved: false, status: "researching", created_at: now() },
+    { id: uid(), subtask_id: chooseCaterer.id, vendor_name: "Spice Route Catering", quote_amount: 1800, link: "", notes: "Per-plate, 80 guests", approved: false, status: "contacted", created_at: now() },
+    { id: uid(), subtask_id: chooseCaterer.id, vendor_name: "Tandoor & Table", quote_amount: 2100, link: "", notes: "Includes dessert station", approved: false, status: "researching", created_at: now() },
+    { id: uid(), subtask_id: bookPhotographer.id, vendor_name: "Jane Photo Studio", quote_amount: 2200, link: "", notes: "8hr coverage + album", approved: true, contact_name: "Jane Wu", phone: "555-0199", email: "jane@janephoto.example", deposit_paid: 400, contract_signed: true, status: "booked", actual_cost: 2200, amount_paid: 400, created_at: now() },
   ];
 
   const wedding_misc_items = [
@@ -84,23 +84,36 @@ function seedDb() {
 
   const wedding_settings = [{ id: true, budget_target: 10000, wedding_date: "2026-12-12", updated_at: now() }];
 
-  const wedding_events = [
-    { id: uid(), title: "Sangeet", event_date: "2026-12-11", start_time: "18:00", end_time: "22:00", location: "Golden Oak Venue — Terrace", notes: "Dinner + performances", created_at: now() },
-    { id: uid(), title: "Ceremony", event_date: "2026-12-12", start_time: "10:00", end_time: "12:00", location: "Golden Oak Venue — Main Hall", notes: "", created_at: now() },
-    { id: uid(), title: "Reception", event_date: "2026-12-12", start_time: "18:30", end_time: "23:00", location: "Golden Oak Venue — Ballroom", notes: "First dance at 8pm", created_at: now() },
+  const sangeetEvent = { id: uid(), title: "Sangeet", event_date: "2026-12-11", start_time: "18:00", end_time: "22:00", location: "Golden Oak Venue — Terrace", notes: "Dinner + performances", created_at: now() };
+  const ceremonyEvent = { id: uid(), title: "Ceremony", event_date: "2026-12-12", start_time: "10:00", end_time: "12:00", location: "Golden Oak Venue — Main Hall", notes: "", created_at: now() };
+  const receptionEvent = { id: uid(), title: "Reception", event_date: "2026-12-12", start_time: "18:30", end_time: "23:00", location: "Golden Oak Venue — Ballroom", notes: "First dance at 8pm", created_at: now() };
+  const wedding_events = [sangeetEvent, ceremonyEvent, receptionEvent];
+
+  const priyaGuest = { id: uid(), name: "Priya Sharma", side: "bride", rsvp: "confirmed", group_name: "College friends", contact: "", notes: "", adults: 2, kids: 0, relationship: "Cousin", meal_choice: "Veg", table_number: "3", created_at: now() };
+  const rajGuest = { id: uid(), name: "Raj Mehta", side: "groom", rsvp: "confirmed", group_name: "Work", contact: "", notes: "", adults: 1, kids: 0, relationship: "Friend", meal_choice: "Non-Veg", table_number: "5", created_at: now() };
+  const kapoorGuest = { id: uid(), name: "The Kapoor Family", side: "shared", rsvp: "pending", group_name: "Family", contact: "", notes: "Party of 4", adults: 3, kids: 1, relationship: "Family", meal_choice: "", table_number: "", created_at: now() };
+  const samGuest = { id: uid(), name: "Sam Roommate", side: "groom", rsvp: "declined", group_name: "Housemates", contact: "", notes: "Out of town that week", adults: 1, kids: 0, relationship: "Friend", meal_choice: "", table_number: "", created_at: now() };
+  const wedding_guests = [priyaGuest, rajGuest, kapoorGuest, samGuest];
+
+  const wedding_guest_attendance = [
+    { id: uid(), guest_id: priyaGuest.id, event_id: sangeetEvent.id, attending: true },
+    { id: uid(), guest_id: priyaGuest.id, event_id: ceremonyEvent.id, attending: true },
+    { id: uid(), guest_id: priyaGuest.id, event_id: receptionEvent.id, attending: true },
+    { id: uid(), guest_id: rajGuest.id, event_id: ceremonyEvent.id, attending: true },
+    { id: uid(), guest_id: rajGuest.id, event_id: receptionEvent.id, attending: true },
+    { id: uid(), guest_id: rajGuest.id, event_id: sangeetEvent.id, attending: false },
   ];
 
-  const wedding_guests = [
-    { id: uid(), name: "Priya Sharma", side: "bride", rsvp: "confirmed", plus_one: true, group_name: "College friends", contact: "", notes: "", created_at: now() },
-    { id: uid(), name: "Raj Mehta", side: "groom", rsvp: "confirmed", plus_one: false, group_name: "Work", contact: "", notes: "", created_at: now() },
-    { id: uid(), name: "The Kapoor Family", side: "shared", rsvp: "pending", plus_one: false, group_name: "Family", contact: "", notes: "Party of 4", created_at: now() },
-    { id: uid(), name: "Sam Roommate", side: "groom", rsvp: "declined", plus_one: false, group_name: "Housemates", contact: "", notes: "Out of town that week", created_at: now() },
+  const wedding_outfits = [
+    { id: uid(), event_id: ceremonyEvent.id, person: "Bride", item: "Lehenga", color: "Red & gold", cost: 1800, ordered: true, fitting_date: "2026-11-01", notes: "", created_at: now() },
+    { id: uid(), event_id: ceremonyEvent.id, person: "Groom", item: "Sherwani", color: "Ivory", cost: 900, ordered: false, fitting_date: "", notes: "", created_at: now() },
+    { id: uid(), event_id: sangeetEvent.id, person: "Bride", item: "Cocktail dress", color: "Emerald", cost: 350, ordered: false, fitting_date: "", notes: "", created_at: now() },
   ];
 
   return {
     users, members, expenses, expense_splits, settlements, grocery_items, games,
     wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings,
-    wedding_events, wedding_guests,
+    wedding_events, wedding_guests, wedding_guest_attendance, wedding_outfits,
   };
 }
 
@@ -217,9 +230,13 @@ class QueryBuilder {
     }
 
     if (this.op.type === "upsert") {
+      // onConflict can be a single column ("id") or, for a composite unique
+      // constraint like wedding_guest_attendance's (guest_id, event_id), a
+      // comma-separated list — match on all of them, same as Postgres would.
+      const conflictCols = this.op.conflictCol.split(",");
       const items = Array.isArray(this.op.payload) ? this.op.payload : [this.op.payload];
       const written = items.map((p) => {
-        const existing = rows.find((r) => r[this.op.conflictCol] === p[this.op.conflictCol]);
+        const existing = rows.find((r) => conflictCols.every((col) => r[col] === p[col]));
         if (existing) {
           Object.assign(existing, p);
           return existing;

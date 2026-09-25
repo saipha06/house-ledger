@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Wallet, CalendarDays, Users } from "lucide-react";
+import { LayoutDashboard, Wallet, CalendarDays, Users, Shirt } from "lucide-react";
 import WeddingDashboard from "./WeddingDashboard";
 import WeddingBudget from "./WeddingBudget";
 import WeddingEvents from "./WeddingEvents";
 import WeddingGuests from "./WeddingGuests";
+import WeddingOutfits from "./WeddingOutfits";
 
 const SUBTABS = [
   ["dashboard", "Dashboard", LayoutDashboard],
   ["budget", "Budget", Wallet],
   ["events", "Events", CalendarDays],
   ["guests", "Guests", Users],
+  ["outfits", "Outfits", Shirt],
 ];
 
-export default function Wedding({ tasks, subtasks, vendorOptions, miscItems, settings, events, guests, refresh }) {
+export default function Wedding({ tasks, subtasks, vendorOptions, miscItems, settings, events, guests, guestAttendance, outfits, refresh }) {
   const [view, setView] = useState("dashboard");
 
   return (
@@ -42,7 +44,8 @@ export default function Wedding({ tasks, subtasks, vendorOptions, miscItems, set
             <WeddingBudget tasks={tasks} subtasks={subtasks} vendorOptions={vendorOptions} miscItems={miscItems} settings={settings} refresh={refresh} />
           )}
           {view === "events" && <WeddingEvents events={events} refresh={refresh} />}
-          {view === "guests" && <WeddingGuests guests={guests} refresh={refresh} />}
+          {view === "guests" && <WeddingGuests guests={guests} events={events} attendance={guestAttendance} refresh={refresh} />}
+          {view === "outfits" && <WeddingOutfits outfits={outfits} events={events} refresh={refresh} />}
         </motion.div>
       </AnimatePresence>
     </div>

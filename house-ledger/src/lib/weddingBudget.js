@@ -15,9 +15,15 @@ export function approvedOption(vendorOptions, subtaskId) {
   return vendorOptions.find((o) => o.subtask_id === subtaskId && o.approved) || null;
 }
 
+// Once a vendor's actual final cost is known it supersedes the original
+// quote — the quote was only ever an estimate.
+export function optionCost(option) {
+  if (!option) return 0;
+  return Number(option.actual_cost ?? option.quote_amount) || 0;
+}
+
 export function subtaskCost(vendorOptions, subtaskId) {
-  const opt = approvedOption(vendorOptions, subtaskId);
-  return opt ? Number(opt.quote_amount) || 0 : 0;
+  return optionCost(approvedOption(vendorOptions, subtaskId));
 }
 
 export function taskSubtotal(subtasks, vendorOptions, taskId) {
