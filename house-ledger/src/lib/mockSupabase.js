@@ -342,23 +342,43 @@ export function createMockClient() {
       // fully testable in mock mode without needing a Gemini key.
       async invoke(name) {
         await networkDelay();
-        if (name !== "extract-statement") return { data: null, error: { message: `Unknown function: ${name}` } };
-        return {
-          data: {
-            transactions: [
-              { date: "2026-08-02", description: "TRADER JOE S #123 SEATTLE WA", summary: "Grocery run at Trader Joe's", amount: 84.32, tier: "shared_high" },
-              { date: "2026-08-07", description: "COSTCO WHSE #0234 SEATTLE WA", summary: "Groceries at Costco", amount: 211.87, tier: "shared_high" },
-              { date: "2026-08-18", description: "DUKE ENERGY ELECTRIC BILL", summary: "Electric bill", amount: 134.56, tier: "shared_high" },
-              { date: "2026-08-09", description: "CHIPOTLE ONLINE ORDER 1092", summary: "Chipotle takeout", amount: 38.45, tier: "shared_maybe" },
-              { date: "2026-08-20", description: "UBER EATS SEATTLE", summary: "Uber Eats food delivery", amount: 27.8, tier: "shared_maybe" },
-              { date: "2026-08-16", description: "AMAZON.COM AMZN.COM/BILL", summary: "Amazon online purchase", amount: 29.99, tier: "personal_uncertain" },
-              { date: "2026-08-03", description: "NETFLIX.COM SUBSCRIPTION", summary: "Netflix subscription", amount: 15.49, tier: "personal_confident" },
-              { date: "2026-08-12", description: "SPOTIFY PREMIUM", summary: "Spotify subscription", amount: 11.99, tier: "personal_confident" },
-              { date: "2026-08-05", description: "SHELL OIL 5741293 SEATTLE WA", summary: "Gas at Shell Oil", amount: 42.1, tier: "personal_confident" },
-            ],
-          },
-          error: null,
-        };
+        if (name === "extract-statement") {
+          return {
+            data: {
+              transactions: [
+                { date: "2026-08-02", description: "TRADER JOE S #123 SEATTLE WA", summary: "Grocery run at Trader Joe's", amount: 84.32, tier: "shared_high" },
+                { date: "2026-08-07", description: "COSTCO WHSE #0234 SEATTLE WA", summary: "Groceries at Costco", amount: 211.87, tier: "shared_high" },
+                { date: "2026-08-18", description: "DUKE ENERGY ELECTRIC BILL", summary: "Electric bill", amount: 134.56, tier: "shared_high" },
+                { date: "2026-08-09", description: "CHIPOTLE ONLINE ORDER 1092", summary: "Chipotle takeout", amount: 38.45, tier: "shared_maybe" },
+                { date: "2026-08-20", description: "UBER EATS SEATTLE", summary: "Uber Eats food delivery", amount: 27.8, tier: "shared_maybe" },
+                { date: "2026-08-16", description: "AMAZON.COM AMZN.COM/BILL", summary: "Amazon online purchase", amount: 29.99, tier: "personal_uncertain" },
+                { date: "2026-08-03", description: "NETFLIX.COM SUBSCRIPTION", summary: "Netflix subscription", amount: 15.49, tier: "personal_confident" },
+                { date: "2026-08-12", description: "SPOTIFY PREMIUM", summary: "Spotify subscription", amount: 11.99, tier: "personal_confident" },
+                { date: "2026-08-05", description: "SHELL OIL 5741293 SEATTLE WA", summary: "Gas at Shell Oil", amount: 42.1, tier: "personal_confident" },
+              ],
+            },
+            error: null,
+          };
+        }
+        if (name === "splitwise-groups-and-friends") {
+          return {
+            data: {
+              groups: [
+                { id: 1001, name: "Housemates", members: [{ id: 999, name: "Mock Splitwise User" }, { id: 1002, name: "Sam Roommate" }, { id: 1003, name: "Priya Roommate" }] },
+                { id: 1004, name: "College Friends", members: [{ id: 999, name: "Mock Splitwise User" }, { id: 1005, name: "Jordan" }, { id: 1006, name: "Alex Friend" }] },
+              ],
+              friends: [
+                { id: 1007, name: "Taylor" },
+                { id: 1008, name: "Morgan" },
+              ],
+            },
+            error: null,
+          };
+        }
+        if (name === "splitwise-send-expense") {
+          return { data: { ok: true, expense: { id: 555555 } }, error: null };
+        }
+        return { data: null, error: { message: `Unknown function: ${name}` } };
       },
     },
   };

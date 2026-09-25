@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Check, X, ArrowRight, Scale, Receipt, HandCoins, FileUp } from "lucide-react";
+import { Plus, Check, X, ArrowRight, Scale, Receipt, HandCoins, FileUp, Send } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { computeBalances, simplifyDebts, fmt } from "../lib/balances";
 import SectionLabel from "./SectionLabel";
@@ -22,7 +22,7 @@ const pillClass = (active) =>
   }`;
 const inputClass = "px-1 py-3 text-[15px] bg-transparent border-0 border-b-[1.5px] border-dashed border-charcoal/35 text-charcoal placeholder:text-charcoal/40";
 
-export default function Money({ me, members, expenses, settlements, refresh, onCelebrate }) {
+export default function Money({ me, members, expenses, settlements, splitwiseConnection, refresh, onCelebrate }) {
   const [view, setView] = useState("balances");
   const [busy, setBusy] = useState(false);
   const [prefill, setPrefill] = useState(null);
@@ -114,7 +114,9 @@ export default function Money({ me, members, expenses, settlements, refresh, onC
             {view === "balances" && (
               <BalancesView balances={balances} members={members} simplified={simplified} memberName={memberName} />
             )}
-            {view === "history" && <HistoryView expenses={expenses} memberName={memberName} onDelete={deleteExpense} busy={busy} />}
+            {view === "history" && (
+              <HistoryView expenses={expenses} memberName={memberName} onDelete={deleteExpense} busy={busy} splitwiseConnection={splitwiseConnection} />
+            )}
             {view === "add" && <AddExpenseView members={members} onAdd={addExpense} busy={busy} prefill={prefill} me={me} />}
             {view === "settle" && (
               <SettleView members={members} simplified={simplified} memberName={memberName} onSettle={addSettlement} busy={busy} />
@@ -209,7 +211,7 @@ function BalancesView({ balances, members, simplified, memberName }) {
   );
 }
 
-function HistoryView({ expenses, memberName, onDelete, busy }) {
+function HistoryView({ expenses, memberName, onDelete, busy, splitwiseConnection }) {
   if (expenses.length === 0) {
     return (
       <div>
@@ -226,36 +228,167 @@ function HistoryView({ expenses, memberName, onDelete, busy }) {
       <div className="flex flex-col gap-2.5">
         <AnimatePresence initial={false}>
           {expenses.map((exp) => (
-            <motion.div
-              key={exp.id}
-              layout
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: 40 }}
-              className="flex items-center gap-2.5 pl-1 pr-3 py-3 bg-paper-2 rounded-md relative"
-            >
-              <Avatar name={memberName(exp.paid_by)} size={36} />
-              <div className="flex-1 min-w-0">
-                <div className="text-[13.5px] font-medium">{exp.description}</div>
-                <div className="text-[11.5px] opacity-55 mt-0.5">
-                  paid by {memberName(exp.paid_by)} · split {exp.split_type} ·{" "}
-                  {new Date(exp.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </div>
-              </div>
-              <div className="font-mono font-semibold text-sm">{fmt(Number(exp.amount))}</div>
-              <motion.button
-                whileTap={{ scale: 0.85 }}
-                disabled={busy}
-                onClick={() => onDelete(exp.id)}
-                title="Delete entry"
-                className="bg-transparent border-none text-rust/60 cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
-              >
-                <X size={14} />
-              </motion.button>
-            </motion.div>
+            <ExpenseRow key={exp.id} exp={exp} memberName={memberName} onDelete={onDelete} busy={busy} splitwiseConnection={splitwiseConnection} />
           ))}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+function ExpenseRow({ exp, memberName, onDelete, busy, splitwiseConnection }) {
+  const [sendOpen, setSendOpen] = useState(false);
+  return (
+    <motion.div layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }} className="bg-paper-2 rounded-md relative">
+      <div className="flex items-center gap-2.5 pl-1 pr-3 py-3">
+        <Avatar name={memberName(exp.paid_by)} size={36} />
+        <div className="flex-1 min-w-0">
+          <div className="text-[13.5px] font-medium">{exp.description}</div>
+          <div className="text-[11.5px] opacity-55 mt-0.5">
+            paid by {memberName(exp.paid_by)} · split {exp.split_type} ·{" "}
+            {new Date(exp.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </div>
+        </div>
+        <div className="font-mono font-semibold text-sm">{fmt(Number(exp.amount))}</div>
+        {splitwiseConnection && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={() => setSendOpen((v) => !v)}
+            title="Send to Splitwise"
+            className={`bg-transparent border-none cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0 ${sendOpen ? "text-brass" : "text-charcoal/45"}`}
+          >
+            <Send size={15} />
+          </motion.button>
+        )}
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          disabled={busy}
+          onClick={() => onDelete(exp.id)}
+          title="Delete entry"
+          className="bg-transparent border-none text-rust/60 cursor-pointer p-2 min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
+        >
+          <X size={14} />
+        </motion.button>
+      </div>
+      {sendOpen && <SplitwiseSendPanel exp={exp} onSent={() => setSendOpen(false)} />}
+    </motion.div>
+  );
+}
+
+function SplitwiseSendPanel({ exp, onSent }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [groups, setGroups] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [mode, setMode] = useState("group"); // "group" | "friends"
+  const [groupId, setGroupId] = useState(null);
+  const [selected, setSelected] = useState(new Set());
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error: fnError } = await supabase.functions.invoke("splitwise-groups-and-friends");
+      if (fnError || data?.error) {
+        setError(fnError?.message || data?.error || "Couldn't load your Splitwise groups/friends.");
+      } else {
+        const gs = data.groups || [];
+        setGroups(gs);
+        setFriends(data.friends || []);
+        if (gs[0]) {
+          setGroupId(gs[0].id);
+          setSelected(new Set(gs[0].members.map((m) => m.id)));
+        } else {
+          setMode("friends");
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const currentGroup = groups.find((g) => g.id === groupId);
+  const people = mode === "group" ? currentGroup?.members || [] : friends;
+
+  const pickGroup = (id) => {
+    setGroupId(id);
+    const g = groups.find((x) => x.id === id);
+    setSelected(new Set((g?.members || []).map((m) => m.id)));
+  };
+
+  const toggle = (id) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const send = async () => {
+    setSending(true);
+    setError("");
+    const { data, error: fnError } = await supabase.functions.invoke("splitwise-send-expense", {
+      body: {
+        description: exp.description,
+        amount: Number(exp.amount),
+        date: exp.date,
+        groupId: mode === "group" ? groupId : 0,
+        participantIds: [...selected],
+      },
+    });
+    setSending(false);
+    if (fnError || data?.error) {
+      setError(fnError?.message || data?.error || "Splitwise rejected this.");
+      return;
+    }
+    setSent(true);
+    setTimeout(() => onSent(), 1200);
+  };
+
+  if (loading) return <div className="border-t border-dashed border-charcoal/15 px-3 py-3 text-[12px] opacity-55 italic">Loading your Splitwise groups…</div>;
+  if (sent) return <div className="border-t border-dashed border-charcoal/15 px-3 py-3 text-[12.5px] text-sage">Sent to Splitwise.</div>;
+
+  return (
+    <div className="border-t border-dashed border-charcoal/15 px-3 py-3">
+      {error && <div className="text-[12px] text-rust mb-2">{error}</div>}
+      {groups.length > 0 && (
+        <div className="flex gap-1.5 mb-2.5">
+          <button onClick={() => setMode("group")} className={pillClass(mode === "group")}>
+            Group
+          </button>
+          <button onClick={() => setMode("friends")} className={pillClass(mode === "friends")}>
+            Friends
+          </button>
+        </div>
+      )}
+      {mode === "group" && groups.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2.5">
+          {groups.map((g) => (
+            <button key={g.id} onClick={() => pickGroup(g.id)} className={pillClass(groupId === g.id)}>
+              {g.name}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="text-[11px] uppercase tracking-wide opacity-55 mb-1.5">Split between</div>
+      <div className="flex flex-col gap-1.5 mb-3">
+        {people.length === 0 && (
+          <div className="text-[12px] opacity-55 italic">No {mode === "group" ? "members in this group" : "friends"} to choose from.</div>
+        )}
+        {people.map((p) => (
+          <label key={p.id} className="flex items-center gap-2 text-[13px] cursor-pointer">
+            <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="accent-brass w-4 h-4" />
+            {p.name}
+          </label>
+        ))}
+      </div>
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        disabled={sending || selected.size === 0}
+        onClick={send}
+        className="w-full py-2.5 text-[13px] font-semibold rounded-lg btn-gradient cursor-pointer disabled:opacity-40"
+      >
+        {sending ? "Sending…" : "Confirm & send"}
+      </motion.button>
     </div>
   );
 }

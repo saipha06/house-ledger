@@ -33,6 +33,7 @@ export default function Ledger({
   weddingVendorOptions,
   weddingMiscItems,
   weddingSettings,
+  splitwiseConnection,
   refresh,
 }) {
   const [section, setSection] = useState("money");
@@ -92,12 +93,22 @@ export default function Ledger({
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {section === "money" && (
-                  <Money me={me} members={members} expenses={expenses} settlements={settlements} refresh={refresh} onCelebrate={setCelebration} />
+                  <Money
+                    me={me}
+                    members={members}
+                    expenses={expenses}
+                    settlements={settlements}
+                    splitwiseConnection={splitwiseConnection}
+                    refresh={refresh}
+                    onCelebrate={setCelebration}
+                  />
                 )}
                 {section === "groceries" && <Groceries items={groceries} members={members} me={me} refresh={refresh} />}
                 {section === "games" && <Games games={games} refresh={refresh} onCelebrate={setCelebration} />}
                 {section === "fate" && <Fate onCelebrate={setCelebration} />}
-                {section === "house" && <House members={members} onSave={saveMembers} busy={busy} />}
+                {section === "house" && (
+                  <House members={members} onSave={saveMembers} busy={busy} me={me} splitwiseConnection={splitwiseConnection} refresh={refresh} />
+                )}
                 {section === "wedding" && showWedding && (
                   <Wedding
                     tasks={weddingTasks}

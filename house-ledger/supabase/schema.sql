@@ -176,3 +176,27 @@ create policy "wedding planners only" on wedding_settings
   with check (lower(auth.jwt() ->> 'email') in ('phani@gmail.com', 'anila1211@gmail.com'));
 
 alter publication supabase_realtime add table wedding_tasks, wedding_subtasks, wedding_vendor_options, wedding_misc_items, wedding_settings;
+
+-- Splitwise integration (added later) — each housemate can independently
+-- connect their own Splitwise account to send individual Casa expenses
+-- over. One row per connected member; RLS restricts everyone to their own
+-- row only (both read and write) — nobody can see or use another
+-- housemate's Splitwise connection. The access_token here is only ever
+-- read by Edge Functions using the service-role key; it's fine for the
+-- owning member's own client to read their own row (it's their own
+-- account), just not anyone else's.
+create table if not exists splitwise_connections (
+  id uuid primary key default gen_random_uuid(),
+  member_id uuid not null references members(id) on delete cascade unique,
+  access_token text not null,
+  splitwise_user_id bigint,
+  splitwise_user_name text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table splitwise_connections enable row level security;
+
+create policy "own connection only" on splitwise_connections
+  for all using (member_id in (select id from members where auth_user_id = auth.uid()))
+  with check (member_id in (select id from members where auth_user_id = auth.uid()));
