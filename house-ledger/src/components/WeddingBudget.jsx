@@ -319,7 +319,7 @@ function TaskCard({ task, subtasks, vendorOptions, subtotal, refresh }) {
         <motion.span animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.15 }} className="opacity-50 shrink-0">
           <ChevronRight size={14} />
         </motion.span>
-        <span className="flex-1 font-display font-semibold text-[14px]">{task.title}</span>
+        <span className="flex-1 min-w-0 truncate font-display font-semibold text-[14px]">{task.title}</span>
         <span className="text-[11px] opacity-55">
           {subtasks.length} item{subtasks.length === 1 ? "" : "s"}
         </span>
@@ -405,7 +405,7 @@ function SubtaskRow({ subtask, options, refresh, taskLabel }) {
           {subtask.status === "done" && <Check size={11} strokeWidth={3} />}
         </motion.button>
         <div className="flex-1 min-w-0">
-          <div className={`text-[13px] font-medium ${subtask.status === "done" ? "line-through opacity-50" : ""}`}>{subtask.title}</div>
+          <div className={`text-[13px] font-medium truncate ${subtask.status === "done" ? "line-through opacity-50" : ""}`}>{subtask.title}</div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] opacity-55">
             {taskLabel && <span>{taskLabel}</span>}
             {subtask.due_date && <span>due {subtask.due_date}</span>}
@@ -498,7 +498,7 @@ function OptionRow({ option: o, onApprove, onDelete, onUpdate }) {
           <ChevronRight size={11} />
         </motion.span>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold">{o.vendor_name}</div>
+          <div className="font-semibold truncate">{o.vendor_name}</div>
           {(o.link || o.notes) && (
             <div className="text-[10.5px] opacity-55 truncate">
               {o.link && (
