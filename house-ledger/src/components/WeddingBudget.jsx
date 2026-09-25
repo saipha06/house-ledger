@@ -517,15 +517,6 @@ function OptionRow({ option: o, onApprove, onDelete, onUpdate }) {
             </div>
           )}
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cycleVendorStatus();
-          }}
-          className={`text-[9.5px] font-bold uppercase tracking-wide px-2 py-1 rounded-full border-none cursor-pointer shrink-0 whitespace-nowrap ${vendorStatusMeta.cls}`}
-        >
-          {vendorStatusMeta.label}
-        </button>
         <span className="font-mono font-semibold w-16 text-right shrink-0">{fmt(optionCost(o))}</span>
         {o.approved ? (
           <span className="text-[10px] font-bold uppercase text-sage w-16 text-center shrink-0">&#10003; Approved</span>
@@ -555,6 +546,15 @@ function OptionRow({ option: o, onApprove, onDelete, onUpdate }) {
 
       {open && form && (
         <div className="px-2.5 pb-2.5 pt-1 flex flex-col gap-1.5 border-t border-dashed border-charcoal/15" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2">
+            <span className="text-[9.5px] uppercase tracking-wide opacity-50">Status</span>
+            <button
+              onClick={cycleVendorStatus}
+              className={`text-[9.5px] font-bold uppercase tracking-wide px-2 py-1 rounded-full border-none cursor-pointer shrink-0 whitespace-nowrap ${vendorStatusMeta.cls}`}
+            >
+              {vendorStatusMeta.label}
+            </button>
+          </div>
           <div className="flex gap-1.5">
             <input className={`${inputClass} flex-1 min-w-0 py-1.5 text-[11.5px]`} placeholder="Contact name" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} />
             <input className={`${inputClass} flex-1 min-w-0 py-1.5 text-[11.5px]`} placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
